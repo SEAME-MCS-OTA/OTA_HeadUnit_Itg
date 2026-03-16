@@ -1,0 +1,18 @@
+[Unit]
+Description=PiRacer Controller
+After=can-interface.service
+Requires=can-interface.service
+
+[Service]
+Type=simple
+User=admin
+WorkingDirectory=/home/admin
+ExecStart=/usr/bin/python3 /home/admin/DES_PiRacer-Assembly/piracer/controller.py
+Restart=always
+RestartSec=5
+
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

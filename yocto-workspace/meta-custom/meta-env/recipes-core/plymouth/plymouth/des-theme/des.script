@@ -1,0 +1,247 @@
+# DES Cockpit Plymouth Boot Animation Script
+# Boot animation: 180 frames @ 30fps = 6.0s
+# Auto-generated - do not edit manually
+# Regenerate with: cd recipes-core/plymouth && python3 generate_script.py 180 30
+
+frame_count = 180;
+animation_fps = 30;
+
+# Load all frames
+frames = [];
+
+frames[0] = Image("frame_0000.png");
+frames[1] = Image("frame_0001.png");
+frames[2] = Image("frame_0002.png");
+frames[3] = Image("frame_0003.png");
+frames[4] = Image("frame_0004.png");
+frames[5] = Image("frame_0005.png");
+frames[6] = Image("frame_0006.png");
+frames[7] = Image("frame_0007.png");
+frames[8] = Image("frame_0008.png");
+frames[9] = Image("frame_0009.png");
+frames[10] = Image("frame_0010.png");
+frames[11] = Image("frame_0011.png");
+frames[12] = Image("frame_0012.png");
+frames[13] = Image("frame_0013.png");
+frames[14] = Image("frame_0014.png");
+frames[15] = Image("frame_0015.png");
+frames[16] = Image("frame_0016.png");
+frames[17] = Image("frame_0017.png");
+frames[18] = Image("frame_0018.png");
+frames[19] = Image("frame_0019.png");
+frames[20] = Image("frame_0020.png");
+frames[21] = Image("frame_0021.png");
+frames[22] = Image("frame_0022.png");
+frames[23] = Image("frame_0023.png");
+frames[24] = Image("frame_0024.png");
+frames[25] = Image("frame_0025.png");
+frames[26] = Image("frame_0026.png");
+frames[27] = Image("frame_0027.png");
+frames[28] = Image("frame_0028.png");
+frames[29] = Image("frame_0029.png");
+frames[30] = Image("frame_0030.png");
+frames[31] = Image("frame_0031.png");
+frames[32] = Image("frame_0032.png");
+frames[33] = Image("frame_0033.png");
+frames[34] = Image("frame_0034.png");
+frames[35] = Image("frame_0035.png");
+frames[36] = Image("frame_0036.png");
+frames[37] = Image("frame_0037.png");
+frames[38] = Image("frame_0038.png");
+frames[39] = Image("frame_0039.png");
+frames[40] = Image("frame_0040.png");
+frames[41] = Image("frame_0041.png");
+frames[42] = Image("frame_0042.png");
+frames[43] = Image("frame_0043.png");
+frames[44] = Image("frame_0044.png");
+frames[45] = Image("frame_0045.png");
+frames[46] = Image("frame_0046.png");
+frames[47] = Image("frame_0047.png");
+frames[48] = Image("frame_0048.png");
+frames[49] = Image("frame_0049.png");
+frames[50] = Image("frame_0050.png");
+frames[51] = Image("frame_0051.png");
+frames[52] = Image("frame_0052.png");
+frames[53] = Image("frame_0053.png");
+frames[54] = Image("frame_0054.png");
+frames[55] = Image("frame_0055.png");
+frames[56] = Image("frame_0056.png");
+frames[57] = Image("frame_0057.png");
+frames[58] = Image("frame_0058.png");
+frames[59] = Image("frame_0059.png");
+frames[60] = Image("frame_0060.png");
+frames[61] = Image("frame_0061.png");
+frames[62] = Image("frame_0062.png");
+frames[63] = Image("frame_0063.png");
+frames[64] = Image("frame_0064.png");
+frames[65] = Image("frame_0065.png");
+frames[66] = Image("frame_0066.png");
+frames[67] = Image("frame_0067.png");
+frames[68] = Image("frame_0068.png");
+frames[69] = Image("frame_0069.png");
+frames[70] = Image("frame_0070.png");
+frames[71] = Image("frame_0071.png");
+frames[72] = Image("frame_0072.png");
+frames[73] = Image("frame_0073.png");
+frames[74] = Image("frame_0074.png");
+frames[75] = Image("frame_0075.png");
+frames[76] = Image("frame_0076.png");
+frames[77] = Image("frame_0077.png");
+frames[78] = Image("frame_0078.png");
+frames[79] = Image("frame_0079.png");
+frames[80] = Image("frame_0080.png");
+frames[81] = Image("frame_0081.png");
+frames[82] = Image("frame_0082.png");
+frames[83] = Image("frame_0083.png");
+frames[84] = Image("frame_0084.png");
+frames[85] = Image("frame_0085.png");
+frames[86] = Image("frame_0086.png");
+frames[87] = Image("frame_0087.png");
+frames[88] = Image("frame_0088.png");
+frames[89] = Image("frame_0089.png");
+frames[90] = Image("frame_0090.png");
+frames[91] = Image("frame_0091.png");
+frames[92] = Image("frame_0092.png");
+frames[93] = Image("frame_0093.png");
+frames[94] = Image("frame_0094.png");
+frames[95] = Image("frame_0095.png");
+frames[96] = Image("frame_0096.png");
+frames[97] = Image("frame_0097.png");
+frames[98] = Image("frame_0098.png");
+frames[99] = Image("frame_0099.png");
+frames[100] = Image("frame_0100.png");
+frames[101] = Image("frame_0101.png");
+frames[102] = Image("frame_0102.png");
+frames[103] = Image("frame_0103.png");
+frames[104] = Image("frame_0104.png");
+frames[105] = Image("frame_0105.png");
+frames[106] = Image("frame_0106.png");
+frames[107] = Image("frame_0107.png");
+frames[108] = Image("frame_0108.png");
+frames[109] = Image("frame_0109.png");
+frames[110] = Image("frame_0110.png");
+frames[111] = Image("frame_0111.png");
+frames[112] = Image("frame_0112.png");
+frames[113] = Image("frame_0113.png");
+frames[114] = Image("frame_0114.png");
+frames[115] = Image("frame_0115.png");
+frames[116] = Image("frame_0116.png");
+frames[117] = Image("frame_0117.png");
+frames[118] = Image("frame_0118.png");
+frames[119] = Image("frame_0119.png");
+frames[120] = Image("frame_0120.png");
+frames[121] = Image("frame_0121.png");
+frames[122] = Image("frame_0122.png");
+frames[123] = Image("frame_0123.png");
+frames[124] = Image("frame_0124.png");
+frames[125] = Image("frame_0125.png");
+frames[126] = Image("frame_0126.png");
+frames[127] = Image("frame_0127.png");
+frames[128] = Image("frame_0128.png");
+frames[129] = Image("frame_0129.png");
+frames[130] = Image("frame_0130.png");
+frames[131] = Image("frame_0131.png");
+frames[132] = Image("frame_0132.png");
+frames[133] = Image("frame_0133.png");
+frames[134] = Image("frame_0134.png");
+frames[135] = Image("frame_0135.png");
+frames[136] = Image("frame_0136.png");
+frames[137] = Image("frame_0137.png");
+frames[138] = Image("frame_0138.png");
+frames[139] = Image("frame_0139.png");
+frames[140] = Image("frame_0140.png");
+frames[141] = Image("frame_0141.png");
+frames[142] = Image("frame_0142.png");
+frames[143] = Image("frame_0143.png");
+frames[144] = Image("frame_0144.png");
+frames[145] = Image("frame_0145.png");
+frames[146] = Image("frame_0146.png");
+frames[147] = Image("frame_0147.png");
+frames[148] = Image("frame_0148.png");
+frames[149] = Image("frame_0149.png");
+frames[150] = Image("frame_0150.png");
+frames[151] = Image("frame_0151.png");
+frames[152] = Image("frame_0152.png");
+frames[153] = Image("frame_0153.png");
+frames[154] = Image("frame_0154.png");
+frames[155] = Image("frame_0155.png");
+frames[156] = Image("frame_0156.png");
+frames[157] = Image("frame_0157.png");
+frames[158] = Image("frame_0158.png");
+frames[159] = Image("frame_0159.png");
+frames[160] = Image("frame_0160.png");
+frames[161] = Image("frame_0161.png");
+frames[162] = Image("frame_0162.png");
+frames[163] = Image("frame_0163.png");
+frames[164] = Image("frame_0164.png");
+frames[165] = Image("frame_0165.png");
+frames[166] = Image("frame_0166.png");
+frames[167] = Image("frame_0167.png");
+frames[168] = Image("frame_0168.png");
+frames[169] = Image("frame_0169.png");
+frames[170] = Image("frame_0170.png");
+frames[171] = Image("frame_0171.png");
+frames[172] = Image("frame_0172.png");
+frames[173] = Image("frame_0173.png");
+frames[174] = Image("frame_0174.png");
+frames[175] = Image("frame_0175.png");
+frames[176] = Image("frame_0176.png");
+frames[177] = Image("frame_0177.png");
+frames[178] = Image("frame_0178.png");
+frames[179] = Image("frame_0179.png");
+
+# Animation setup
+animation_sprite = Sprite();
+screen_width = Window.GetWidth();
+screen_height = Window.GetHeight();
+
+# NOTE: Plymouth's script engine does not expose wall-clock time.
+# The refresh callback is called at approximately 50 Hz (~20 ms).
+# We use a fixed +0.02 increment which is the standard approach
+# for Plymouth themes.  If the actual refresh rate differs, the
+# playback speed will shift proportionally — this is a known
+# limitation of the Plymouth script API.
+elapsed_time = 0;
+start_frame_offset = 0; # 0.0s @ 30fps
+
+fun refresh_callback() {
+    target_frame = Math.Int(elapsed_time * animation_fps);
+    source_frame = target_frame + start_frame_offset;
+    if (source_frame >= frame_count)
+        current_frame_index = frame_count - 1;
+    else
+        current_frame_index = source_frame;
+
+    animation_sprite.SetImage(frames[current_frame_index]);
+
+    # Center sprite
+    frame_width = frames[current_frame_index].GetWidth();
+    frame_height = frames[current_frame_index].GetHeight();
+    pos_x = (screen_width - frame_width) / 2;
+    pos_y = (screen_height - frame_height) / 2;
+    animation_sprite.SetPosition(pos_x, pos_y, 100);
+
+    elapsed_time += 0.02;
+}
+
+Plymouth.SetRefreshFunction(refresh_callback);
+
+fun progress_callback(duration, progress) { }
+Plymouth.SetBootProgressFunction(progress_callback);
+
+fun message_callback(text) { }
+Plymouth.SetMessageFunction(message_callback);
+
+fun display_normal_callback() { }
+fun display_password_callback(prompt, bullets) { }
+fun display_question_callback(prompt, entry) { }
+
+Plymouth.SetDisplayNormalFunction(display_normal_callback);
+Plymouth.SetDisplayPasswordFunction(display_password_callback);
+Plymouth.SetDisplayQuestionFunction(display_question_callback);
+
+fun quit_callback() {
+    animation_sprite = NULL;
+}
+
+Plymouth.SetQuitFunction(quit_callback);

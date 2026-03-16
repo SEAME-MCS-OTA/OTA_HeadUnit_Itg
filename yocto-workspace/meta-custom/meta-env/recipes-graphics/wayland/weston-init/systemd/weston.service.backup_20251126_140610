@@ -1,0 +1,15 @@
+[Unit]
+Description=Weston Wayland Compositor (Minimal Safe)
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/weston
+Restart=no
+User=root
+Group=root
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=graphical.target

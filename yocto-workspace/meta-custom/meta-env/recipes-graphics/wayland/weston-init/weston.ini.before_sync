@@ -1,0 +1,30 @@
+# DES Cockpit Weston Configuration - Dual Display (RESTORED)
+# Minimal but KEEPS dual HDMI outputs
+
+[core]
+backend=drm-backend.so
+shell=kiosk-shell.so
+idle-time=0
+require-input=false
+
+# HDMI-A-1: Head-Unit (Left screen)
+[output]
+name=HDMI-A-1
+mode=1024x600@60
+transform=normal
+scale=1
+
+# HDMI-A-2: Instrument Cluster (Right screen)
+[output]
+name=HDMI-A-2
+mode=1024x600@60
+transform=normal
+scale=1
+
+[shell]
+panel-position=none
+background-color=0xff000000
+locking=false
+
+[kiosk-shell]
+# Fullscreen applications

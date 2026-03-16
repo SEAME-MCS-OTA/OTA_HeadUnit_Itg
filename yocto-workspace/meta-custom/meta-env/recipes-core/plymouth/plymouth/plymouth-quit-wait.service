@@ -1,0 +1,15 @@
+[Unit]
+Description=Plymouth - Wait until graphical session is ready
+DefaultDependencies=no
+After=plymouth-start.service systemd-user-sessions.service
+Before=getty@tty1.service display-manager.service
+
+[Service]
+Type=oneshot
+# Don't quit Plymouth until we explicitly tell it to
+# This keeps the boot animation running during app initialization
+ExecStart=/bin/true
+RemainAfterExit=yes
+
+[Install]
+WantedBy=graphical.target

@@ -1,0 +1,32 @@
+[Unit]
+Description=WiFi Auto-Enable Service (Fixed)
+After=network.target connman.service
+Wants=connman.service
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+
+# Timeout to prevent hanging boot
+TimeoutStartSec=30
+
+# Unblock WiFi
+ExecStart=/bin/sh -c 'rfkill unblock wifi || true'
+ExecStart=/bin/sh -c 'rfkill unblock wlan || true'
+
+# Find and bring up wlan interface
+ExecStart=/bin/sh -c 'for iface in /sys/class/net/wlan*; do [ -e "$iface" ] && ip link set $(basename $iface) up || true; done'
+
+# Alternative: Use connmanctl if available
+ExecStart=/bin/sh -c 'which connmanctl >/dev/null && connmanctl enable wifi || true'
+
+# Give hardware time to initialize
+ExecStartPost=/bin/sleep 2
+
+RemainAfterExit=yes
+
+# Don't fail the boot if WiFi doesn't work
+SuccessExitStatus=0 1
+
+[Install]
+WantedBy=multi-user.target

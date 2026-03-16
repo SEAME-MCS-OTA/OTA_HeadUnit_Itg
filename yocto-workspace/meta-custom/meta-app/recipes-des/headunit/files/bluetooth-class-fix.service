@@ -1,0 +1,12 @@
+[Unit]
+Description=Set Bluetooth Class to Audio/Video Device
+After=bluetooth.service
+Wants=bluetooth.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/sh -c 'sleep 3; /usr/bin/hciconfig hci0 class 0x240408 || true'
+
+[Install]
+WantedBy=multi-user.target

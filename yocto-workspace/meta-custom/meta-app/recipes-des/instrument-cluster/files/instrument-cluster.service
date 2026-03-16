@@ -1,0 +1,26 @@
+[Unit]
+Description=Instrument Cluster Application (Minimal - Dual Display)
+After=weston.service
+Requires=weston.service
+
+[Service]
+Type=simple
+Environment=QT_QPA_PLATFORM=wayland
+Environment=WAYLAND_DISPLAY=wayland-0
+Environment=XDG_RUNTIME_DIR=/run
+Environment=QT_WAYLAND_DISABLE_WINDOWDECORATION=1
+Environment=QT_WAYLAND_FORCE_FULLSCREEN=1
+Environment=QT_WAYLAND_FULLSCREEN_OUTPUT=HDMI-A-2
+
+# Synchronized startup with Head-Unit (2 seconds for Weston stability)
+ExecStartPre=/bin/sleep 2
+
+ExecStart=/usr/bin/appIC
+Restart=no
+User=root
+Group=root
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=graphical.target

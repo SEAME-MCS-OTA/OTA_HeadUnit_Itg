@@ -1,0 +1,16 @@
+[Unit]
+Description=Bring up can1 (500k)
+After=sys-subsystem-net-devices-can1.device
+# Only start if can1 device actually exists
+ConditionPathExists=/sys/class/net/can1
+
+[Service]
+Type=oneshot
+ExecStart=/sbin/ip link set can1 type can bitrate 500000
+ExecStart=/sbin/ip link set up can1
+RemainAfterExit=yes
+
+[Install]
+# Device-unit trigger: systemd will start this service when can1 appears.
+# This handles late-enumeration (e.g. USB CAN adapter plugged in after boot).
+WantedBy=multi-user.target sys-subsystem-net-devices-can1.device

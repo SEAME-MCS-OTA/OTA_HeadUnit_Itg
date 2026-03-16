@@ -1,0 +1,30 @@
+[submodule "poky"]
+    path = yocto-workspace/poky
+    url = https://git.yoctoproject.org/poky
+
+[submodule "meta-openembedded"]
+    path = yocto-workspace/meta-openembedded
+    url = https://github.com/openembedded/meta-openembedded
+
+[submodule "meta-qt6"]
+    path = yocto-workspace/meta-qt6
+    url = https://code.qt.io/yocto/meta-qt6.git
+
+[submodule "meta-raspberrypi"]
+    path = yocto-workspace/meta-raspberrypi
+    url = https://github.com/agherzan/meta-raspberrypi
+[submodule "yocto-workspace/poky"]
+	path = yocto-workspace/poky
+	url = https://git.yoctoproject.org/poky
+[submodule "yocto-workspace/meta-openembedded"]
+	path = yocto-workspace/meta-openembedded
+	url = https://github.com/openembedded/meta-openembedded
+[submodule "yocto-workspace/meta-qt6"]
+	path = yocto-workspace/meta-qt6
+	url = https://code.qt.io/yocto/meta-qt6.git
+[submodule "yocto-workspace/meta-raspberrypi"]
+	path = yocto-workspace/meta-raspberrypi
+	url = https://github.com/agherzan/meta-raspberrypi
+[submodule "yocto-workspace/meta-rauc"]
+	path = yocto-workspace/meta-rauc
+	url = https://github.com/rauc/meta-rauc.git

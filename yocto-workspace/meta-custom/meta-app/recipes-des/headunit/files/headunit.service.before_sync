@@ -1,0 +1,24 @@
+[Unit]
+Description=Head Unit Application (Minimal - Dual Display)
+After=weston.service
+
+[Service]
+Type=simple
+Environment=QT_QPA_PLATFORM=wayland
+Environment=WAYLAND_DISPLAY=wayland-0
+Environment=XDG_RUNTIME_DIR=/run
+Environment=QT_WAYLAND_DISABLE_WINDOWDECORATION=1
+Environment=QT_WAYLAND_FORCE_FULLSCREEN=1
+
+# Simple 5 second wait - no complex loop
+ExecStartPre=/bin/sleep 5
+
+ExecStart=/usr/bin/HeadUnitApp
+Restart=no
+User=root
+Group=root
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=graphical.target

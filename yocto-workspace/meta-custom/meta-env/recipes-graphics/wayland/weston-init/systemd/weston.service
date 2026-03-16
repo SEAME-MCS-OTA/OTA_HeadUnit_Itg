@@ -1,0 +1,74 @@
+# Weston Wayland Compositor for DES Cockpit dual-display system
+# Based on upstream weston.service with custom weston.ini
+
+[Unit]
+Description=Weston, a Wayland compositor, as a system service
+Documentation=man:weston(1) man:weston.ini(5)
+Documentation=http://wayland.freedesktop.org/
+
+# Make sure we are started after logins are permitted
+Requires=systemd-user-sessions.service
+After=systemd-user-sessions.service
+
+# If Plymouth is used, wait for our custom quit timer to release DRM
+Wants=plymouth-quit-timer.service
+After=plymouth-quit-timer.service
+
+# D-Bus is necessary for contacting logind. Logind is required.
+Wants=dbus.socket
+After=dbus.socket
+
+# Ensure the socket is present
+Requires=weston.socket
+
+# Since we are part of the graphical session, make sure we are started before it is complete
+Before=graphical.target
+
+# Prevent starting on systems without virtual consoles
+ConditionPathExists=/dev/tty0
+
+# Limit restart loops if DRM handoff fails
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+[Service]
+# Requires systemd-notify.so Weston plugin
+Type=notify
+EnvironmentFile=/etc/default/weston
+# No extra sleep needed — plymouth-quit-timer already waits 10s and releases DRM
+# Use custom weston.ini for dual-display configuration
+ExecStart=/usr/bin/weston --continue-without-input --config=/etc/xdg/weston/weston.ini --modules=systemd-notify.so
+Restart=on-failure
+RestartSec=5
+
+# Optional watchdog setup
+#TimeoutStartSec=60
+#WatchdogSec=20
+
+# The user to run Weston as
+User=weston
+Group=weston
+
+# Make sure the working directory is the users home directory
+WorkingDirectory=/home/weston
+
+# Set up a full user session for the user, required by Weston
+PAMName=weston-autologin
+
+# A virtual terminal is needed
+TTYPath=/dev/tty7
+TTYReset=yes
+TTYVHangup=yes
+TTYVTDisallocate=yes
+
+# Fail to start if not controlling the tty
+StandardInput=tty-fail
+StandardOutput=journal
+StandardError=journal
+
+# Log this user with utmp, letting it show up with commands 'w' and 'who'
+UtmpIdentifier=tty7
+UtmpMode=user
+
+[Install]
+WantedBy=graphical.target

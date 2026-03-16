@@ -1,0 +1,18 @@
+### Re-enable error checking for Bluetooth modules
+.fail
+
+### Bluetooth modules DISABLED - using bluealsa instead of PulseAudio
+#
+# .ifexists module-bluez5-discover.so
+# load-module module-bluez5-discover
+# .endif
+#
+# .nofail
+# .ifexists module-bluetooth-policy.so
+# load-module module-bluetooth-policy auto_switch=2
+# .endif
+# .fail
+
+### Null sink no longer needed - bluealsa handles Bluetooth audio directly
+# load-module module-null-sink sink_name=bt_sink sink_properties=device.description="Bluetooth_Fallback_Sink"
+# set-default-sink bt_sink

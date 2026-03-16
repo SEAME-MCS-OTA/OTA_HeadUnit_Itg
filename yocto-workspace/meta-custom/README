@@ -1,0 +1,39 @@
+meta-custom overview
+====================
+
+`meta-custom` bundles the DES in-vehicle software layers that sit on top of
+Poky/meta-qt6.  The layers are organised by responsibility so each hardware or
+UX feature can evolve independently:
+
+* **meta-app** – Packages the Qt-based HeadUnit and Instrument Cluster user
+  interfaces and their systemd service units.  Source trees are consumed from
+  sibling workspaces so UI developers can iterate outside of Yocto.
+* **meta-env** – Captures platform policy: base image recipe, boot overlays,
+  distro configuration, and core services such as D-Bus or networking tweaks.
+* **meta-piracer** – Provides PiRacer-specific enablement, including SocketCAN
+  helpers, the gamepad controller daemon, and the Python hardware abstraction
+  modules the controller depends on.
+
+Adding the layers
+-----------------
+
+Enable the layers in your build environment:
+
+.. code-block:: bash
+
+   bitbake-layers add-layer meta-custom/meta-app
+   bitbake-layers add-layer meta-custom/meta-env
+   bitbake-layers add-layer meta-custom/meta-piracer
+
+Once added, the reference image recipe
+``meta-custom/meta-env/recipes-core/images/des-image.bb`` pulls in the head unit
+UI, instrument cluster, and controller components by default.
+
+External source expectations
+----------------------------
+
+Several recipes (for example the HeadUnit and Instrument Cluster applications)
+stage their sources from sibling directories such as ``Head-Unit`` or
+``DES_Instrument-Cluster``.  Ensure those checkouts are present relative to the
+Yocto build directory, or override the corresponding ``*_SRC`` variables in
+``local.conf``/``.bbappend`` files.
