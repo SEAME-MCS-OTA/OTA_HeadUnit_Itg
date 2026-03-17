@@ -1,0 +1,92 @@
+[Unit]
+Description=Weston Wayland Compositor
+Documentation=man:weston(1) man:weston.ini(5)
+
+# Wait for system to be ready
+Requires=systemd-user-sessions.service
+After=systemd-user-sessions.service
+
+# D-Bus is needed
+Wants=dbus.socket
+After=dbus.socket
+
+# CRITICAL: Wait for Plymouth to fully quit
+After=plymouth-quit-timer.service
+
+# Don't start until basic system is up
+After=multi-user.target
+
+# Require tty0 exists
+ConditionPathExists=/dev/tty0
+
+# Require DRM device exists
+ConditionPathExists=/dev/dri/card0
+
+[Service]
+Type=simple
+
+# Environment - explicitly set everything
+Environment=XDG_RUNTIME_DIR=/run
+Environment=WAYLAND_DISPLAY=wayland-0
+Environment=QT_QPA_PLATFORM=wayland
+
+# Optional environment file
+EnvironmentFile=-/etc/default/weston
+
+# CRITICAL: Ensure /run exists and is writable
+ExecStartPre=/bin/mkdir -p /run
+ExecStartPre=/bin/chmod 755 /run
+
+# CRITICAL: Clean up any stale sockets
+ExecStartPre=-/bin/rm -f /run/wayland-0 /run/wayland-0.lock
+
+# CRITICAL: Ensure DRM is available (wait up to 5 seconds)
+ExecStartPre=/bin/sh -c 'for i in 1 2 3 4 5; do if [ -e /dev/dri/card0 ] && [ -w /dev/dri/card0 ]; then exit 0; fi; sleep 1; done; exit 0'
+
+# Start Weston with dual-display config
+ExecStart=/usr/bin/weston --config=/etc/xdg/weston/weston.ini --log=/var/log/weston.log
+
+# Give Weston time to initialize
+ExecStartPost=/bin/sleep 2
+
+# Clean up on stop
+ExecStopPost=-/bin/rm -f /run/wayland-0 /run/wayland-0.lock
+
+# Restart policy
+Restart=on-failure
+RestartSec=5
+StartLimitBurst=5
+StartLimitIntervalSec=60
+
+# Run as root for full hardware access
+User=root
+Group=root
+SupplementaryGroups=video input render
+
+# Working directory
+WorkingDirectory=/root
+
+# Virtual terminal - Try to allocate TTY7
+TTYPath=/dev/tty7
+TTYReset=yes
+TTYVHangup=yes
+TTYVTDisallocate=yes
+
+# I/O
+StandardInput=null
+StandardOutput=journal
+StandardError=journal
+
+# Timeouts
+TimeoutStartSec=30
+TimeoutStopSec=10
+
+# Utmp
+UtmpIdentifier=tty7
+UtmpMode=user
+
+# Security - allow full access for debugging
+NoNewPrivileges=false
+
+[Install]
+WantedBy=graphical.target

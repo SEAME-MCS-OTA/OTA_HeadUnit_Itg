@@ -1,0 +1,14 @@
+# Waveshare 7inch HDMI LCD Touch Mapping for Dual Display
+# Map each USB touch device to its corresponding HDMI output
+
+# First touch device -> HDMI-A-1 (HeadUnit)
+# Adjust SUBSYSTEM=="input" path based on actual USB port
+# Example: if connected to USB port 1-1.1
+SUBSYSTEM=="input", KERNEL=="event[0-9]*", ATTRS{name}=="*ILITEK*", ATTRS{busnum}=="1", ATTRS{devpath}=="1.1", ENV{WL_OUTPUT}="HDMI-A-1"
+
+# Second touch device -> HDMI-A-2 (Instrument Cluster)
+# Example: if connected to USB port 1-1.2
+SUBSYSTEM=="input", KERNEL=="event[0-9]*", ATTRS{name}=="*ILITEK*", ATTRS{busnum}=="1", ATTRS{devpath}=="1.2", ENV{WL_OUTPUT}="HDMI-A-2"
+
+# Note: You need to update busnum/devpath after checking actual USB topology with:
+# udevadm info --attribute-walk --path=/sys/class/input/eventX

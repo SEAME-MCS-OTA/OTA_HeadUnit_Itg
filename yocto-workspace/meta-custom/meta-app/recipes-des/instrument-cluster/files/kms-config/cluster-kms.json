@@ -1,0 +1,11 @@
+{
+  "device": "/dev/dri/card0",
+  "separateScreens": true,
+  "outputs": [
+    {
+      "name": "HDMI-A-2",
+      "format": "argb8888",
+      "primary": true
+    }
+  ]
+}

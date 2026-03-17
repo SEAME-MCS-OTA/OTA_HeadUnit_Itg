@@ -1,0 +1,17 @@
+[Unit]
+Description=BlueALSA Bluetooth Audio Service
+Requires=bluetooth.service
+After=bluetooth.service dbus.service
+BindsTo=sys-subsystem-bluetooth-devices-hci0.device
+After=sys-subsystem-bluetooth-devices-hci0.device
+
+[Service]
+Type=simple
+User=root
+ExecStartPre=/bin/sleep 3
+ExecStart=/usr/bin/bluealsa -p a2dp-sink -p a2dp-source
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

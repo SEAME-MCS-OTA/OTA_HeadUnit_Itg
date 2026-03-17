@@ -1,0 +1,35 @@
+meta-env
+========
+
+`meta-env` codifies the DES Raspberry Pi runtime environment.  It complements
+the application and PiRacer layers by providing the baseline image recipe,
+boot-time hardware configuration, and system policies that every build should
+inherit.
+
+Key components
+--------------
+
+* ``recipes-core/images/des-image.bb`` – Reference image that pulls in the
+  HeadUnit, Instrument Cluster, and PiRacer controller packages.
+* ``recipes-bsp/bootfiles/rpi-config_%.bbappend`` – Enables SPI/I²C and applies
+  the MCP2515 CAN overlays in ``config.txt`` so SocketCAN devices are ready at
+  boot.
+* ``recipes-core/dbus/des-gear-dbus-config.bb`` – Drops the D-Bus policy file
+  allowing the gear service to be accessed by the instrument cluster.
+* ``recipes-connectivity/connman/connman_%.bbappend`` – Autoconnect tweaks for
+  Wi-Fi via ConnMan.
+* ``recipes-kernel/modules/i2c-dev-autoload.bb`` – Ensures ``i2c-dev`` is
+  autoloaded for the user-space vehicle libraries.
+
+Using the layer
+---------------
+
+Add the layer alongside the other meta-custom layers:
+
+.. code-block:: bash
+
+   bitbake-layers add-layer meta-custom/meta-env
+
+Adjust or extend the supplied recipes in your own ``.bbappend`` files if the
+vehicle configuration diverges (for example different CAN oscillator values or
+custom image package sets).

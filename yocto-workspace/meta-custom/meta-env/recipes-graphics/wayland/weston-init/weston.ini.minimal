@@ -1,0 +1,38 @@
+# Minimal Weston Configuration for Debugging
+# Use this if the dual-display config fails
+
+[core]
+# DRM backend for direct hardware access
+backend=drm-backend.so
+
+# Kiosk shell for fullscreen apps
+shell=kiosk-shell.so
+
+# No idle timeout
+idle-time=0
+
+# Enable input devices
+require-input=false
+
+[shell]
+# No panel
+panel-position=none
+
+# Black background
+background-color=0xff000000
+
+# No locking
+locking=false
+
+[output]
+# First output - try to use it
+name=HDMI-A-1
+mode=1024x600@60
+
+[output]
+# Second output - try to use it
+name=HDMI-A-2
+mode=1024x600@60
+
+[kiosk-shell]
+# Fullscreen applications

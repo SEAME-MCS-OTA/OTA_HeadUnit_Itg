@@ -1,0 +1,14 @@
+# Yocto build artefacts
+build-des/tmp*
+build-des/sstate-cache
+build-des/downloads
+build-des/pseudo
+build-des/work
+build-des/cache
+build-des/workspace
+build-des/bitbake-cookerdaemon.log
+
+# Editor settings
+.vscode/
+.yocto-cache/
+build-des/conf/auto.conf

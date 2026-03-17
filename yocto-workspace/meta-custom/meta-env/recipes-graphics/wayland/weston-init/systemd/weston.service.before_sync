@@ -1,0 +1,66 @@
+[Unit]
+Description=Weston Wayland Compositor
+Documentation=man:weston(1) man:weston.ini(5)
+
+# Dependencies
+Requires=systemd-user-sessions.service
+After=systemd-user-sessions.service
+Wants=dbus.socket
+After=dbus.socket
+
+# CRITICAL FIX: Wait for Plymouth to fully quit and release DRM
+# Without this, Weston fails to acquire DRM while Plymouth holds it
+After=plymouth-quit-timer.service
+
+# Socket requirement
+Requires=weston.socket
+
+# Start before graphical target
+Before=graphical.target
+
+# Require tty0
+ConditionPathExists=/dev/tty0
+
+[Service]
+Type=simple
+
+# Environment
+EnvironmentFile=-/etc/default/weston
+
+# Start Weston with dual-display config
+ExecStart=/usr/bin/weston --config=/etc/xdg/weston/weston.ini
+
+# Give Weston time to initialize
+ExecStartPost=/bin/sleep 1
+
+# Restart policy
+Restart=on-failure
+RestartSec=5
+
+# Run as root for reliability
+User=root
+Group=root
+
+# Working directory
+WorkingDirectory=/root
+
+# Virtual terminal
+TTYPath=/dev/tty7
+TTYReset=yes
+TTYVHangup=yes
+TTYVTDisallocate=yes
+
+# I/O
+StandardInput=null
+StandardOutput=journal
+StandardError=journal
+
+# Timeouts
+TimeoutStartSec=60
+
+# Utmp
+UtmpIdentifier=tty7
+UtmpMode=user
+
+[Install]
+WantedBy=graphical.target

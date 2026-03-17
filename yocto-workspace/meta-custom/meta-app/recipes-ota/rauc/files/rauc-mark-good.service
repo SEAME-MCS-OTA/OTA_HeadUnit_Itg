@@ -1,0 +1,17 @@
+[Unit]
+Description=RAUC Health Guard (mark-good or rollback)
+Documentation=https://rauc.io
+After=weston.service headunit.service
+Wants=weston.service headunit.service
+ConditionPathExists=/boot/rauc.state
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/sbin/rauc-mark-good.sh
+TimeoutStartSec=140
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

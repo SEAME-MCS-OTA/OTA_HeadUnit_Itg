@@ -1,0 +1,15 @@
+# short-description: A/B rootfs SD card image for DES Head-Unit OTA
+# long-description:
+#   Creates a partitioned SD card image with dual rootfs (A/B) for
+#   over-the-air image updates on Raspberry Pi 4.
+#
+#   Layout:
+#     p1  /boot     vfat   128 MB   kernel, dtb, overlays, cmdline/config
+#     p2  rootfs-a  ext4   2.5 GB   active slot A (initial)
+#     p3  rootfs-b  ext4   2.5 GB   inactive slot B (OTA target)
+#     p4  /data     ext4   1 GB+    persistent: downloads, state, logs, user data
+
+part /boot --source bootimg-partition --ondisk mmcblk0 --fstype=vfat --label boot --active --align 4096 --size 128
+part /     --source rootfs            --ondisk mmcblk0 --fstype=ext4 --label rootfs-a --align 4096 --fixed-size 2560 --no-fstab-update
+part       --ondisk mmcblk0           --fstype=ext4 --label rootfs-b --align 4096 --fixed-size 2560
+part       --ondisk mmcblk0           --fstype=ext4 --label data     --align 4096 --size 1024

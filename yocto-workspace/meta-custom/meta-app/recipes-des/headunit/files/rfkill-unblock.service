@@ -1,0 +1,11 @@
+[Unit]
+Description=Enable Bluetooth Radio at boot
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/rfkill unblock bluetooth
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

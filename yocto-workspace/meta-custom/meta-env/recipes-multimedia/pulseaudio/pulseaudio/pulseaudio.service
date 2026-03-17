@@ -1,0 +1,14 @@
+[Unit]
+Description=PulseAudio Sound System
+Requires=dbus.service bluetooth.service
+After=dbus.service bluetooth.service
+Before=sound.target
+
+[Service]
+Type=notify
+ExecStart=/usr/bin/pulseaudio --system --disallow-exit --daemonize=no --log-target=journal
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

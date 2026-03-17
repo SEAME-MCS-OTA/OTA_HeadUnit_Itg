@@ -1,0 +1,19 @@
+[Unit]
+Description=Plymouth Quit Timer (10 seconds — one full 6s animation cycle + 4s margin)
+After=plymouth-start.service
+Before=display-manager.service weston.service plymouth-quit.service plymouth-quit-wait.service
+# Guard against early quit from distro defaults on devices with stale unit state.
+Conflicts=plymouth-quit.service plymouth-quit-wait.service
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+# Animation: 180 frames @ 30fps = 6.0s, plus ~4s margin.
+# Keep splash retained during handoff to avoid brief tty1 flash.
+# Fallback to plain quit if --retain-splash is unavailable.
+ExecStart=/bin/sh -c 'sleep 10; /usr/bin/plymouth quit --retain-splash || /usr/bin/plymouth quit || true'
+RemainAfterExit=yes
+TimeoutStartSec=20
+
+[Install]
+WantedBy=sysinit.target

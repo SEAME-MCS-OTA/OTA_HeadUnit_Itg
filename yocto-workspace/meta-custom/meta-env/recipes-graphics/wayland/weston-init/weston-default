@@ -1,0 +1,10 @@
+# Weston environment configuration
+# This file is sourced by weston.service
+# Most environment variables are set automatically by systemd/PAM
+
+# Wayland display name (socket created by weston.socket)
+WAYLAND_DISPLAY=wayland-0
+
+# Enable debug logging if needed
+#WESTON_LOG_LEVEL=debug
+#WESTON_DEBUG=1

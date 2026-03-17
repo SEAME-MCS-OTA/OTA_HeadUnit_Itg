@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=DES
+Description=DES Cockpit boot animation
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/des
+ScriptFile=/usr/share/plymouth/themes/des/des.script

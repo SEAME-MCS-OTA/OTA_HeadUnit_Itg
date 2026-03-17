@@ -1,0 +1,52 @@
+meta-piracer
+============
+
+Hardware enablement snippets for the DES PiRacer controller stack. This layer
+complements the head-unit/image layers by packaging runtime helpers that live
+outside of Poky.
+
+Provided recipes
+----------------
+
+* ``recipes-support/can/can1.bb`` – one-shot systemd unit that configures the
+  ``can1`` SocketCAN interface at 500 kbit/s and keeps it up for the runtime.
+* ``recipes-support/piracer-controller/piracer-controller.bb`` – installs the
+  gamepad-to-vehicle bridge (`controller.py`, `gamepads.py`) and a
+  ``piracer-controller.service`` unit that runs it at boot.
+* ``recipes-python/vehicles/des-piracer-vehicles.bb`` – installs the vendor
+  ``vehicles.py`` module into Python site-packages so the controller can drive
+  the PiRacer hardware.
+
+External dependencies
+---------------------
+
+* The controller script expects a ``vehicles`` module that exposes the
+  ``PiRacerStandard`` class. Point ``VEHICLES_SRC`` (in
+  ``des-piracer-vehicles.bb``) to your vendor SDK path (e.g.
+  ``${TOPDIR}/../../DES_PiRacer-Assembly/piracer``). If missing, the controller
+  still runs in a stub mode and logs a warning.
+* A compliant USB gamepad must appear as ``/dev/input/js0``.
+
+Integration
+-----------
+
+Add the layer to your build:
+
+.. code-block:: bash
+
+   bitbake-layers add-layer meta-custom/meta-piracer
+
+Then extend your image recipe to include the packages:
+
+.. code-block:: bitbake
+
+   IMAGE_INSTALL:append = " can1 piracer-controller "
+
+At runtime, confirm the services:
+
+* ``systemctl status can1``
+* ``systemctl status piracer-controller``
+
+For debugging or bench testing without hardware the controller logs to the
+journal; once the vendor ``vehicles`` module is present it will drive the ESC
+and steering servos as expected.

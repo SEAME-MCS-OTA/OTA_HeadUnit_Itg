@@ -1,0 +1,10 @@
+# User-specific files
+.vscode
+*.user*
+*.ini
+
+# Build directory
+build
+
+# Only for macOS
+.DS_Store

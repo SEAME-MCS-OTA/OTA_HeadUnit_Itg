@@ -1,0 +1,61 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36" version="28.0.7">
+  <diagram name="Page-1" id="omOHPllpFwhAGLh-UTjf">
+    <mxGraphModel dx="1123" dy="661" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="ucC79e3HvEud2j4dHQeN-10" value="" style="group" parent="1" vertex="1" connectable="0">
+          <mxGeometry x="60" y="190" width="260" height="260" as="geometry" />
+        </mxCell>
+        <mxCell id="ucC79e3HvEud2j4dHQeN-1" value="" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=none;" parent="ucC79e3HvEud2j4dHQeN-10" vertex="1">
+          <mxGeometry width="260" height="260" as="geometry" />
+        </mxCell>
+        <mxCell id="ucC79e3HvEud2j4dHQeN-3" value="Interrupt Sub Routine (ISR)" style="rounded=0;whiteSpace=wrap;html=1;" parent="ucC79e3HvEud2j4dHQeN-10" vertex="1">
+          <mxGeometry x="15" y="10" width="90" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="ucC79e3HvEud2j4dHQeN-4" value="Arduino Code" style="rounded=0;whiteSpace=wrap;html=1;" parent="ucC79e3HvEud2j4dHQeN-10" vertex="1">
+          <mxGeometry x="15" y="130" width="235" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="ucC79e3HvEud2j4dHQeN-5" value="SPI Communication" style="rounded=0;whiteSpace=wrap;html=1;" parent="ucC79e3HvEud2j4dHQeN-10" vertex="1">
+          <mxGeometry x="135" y="10" width="90" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="ucC79e3HvEud2j4dHQeN-6" value="TimerOne.h" style="rounded=0;whiteSpace=wrap;html=1;" parent="ucC79e3HvEud2j4dHQeN-10" vertex="1">
+          <mxGeometry x="15" y="70" width="90" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="ucC79e3HvEud2j4dHQeN-7" value="mcp_can.h" style="rounded=0;whiteSpace=wrap;html=1;" parent="ucC79e3HvEud2j4dHQeN-10" vertex="1">
+          <mxGeometry x="180" y="70" width="70" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="ucC79e3HvEud2j4dHQeN-8" value="spi.h" style="rounded=0;whiteSpace=wrap;html=1;" parent="ucC79e3HvEud2j4dHQeN-10" vertex="1">
+          <mxGeometry x="120" y="70" width="50" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="p61SQlNbwPxZVqq3MRAO-1" value="" style="group" vertex="1" connectable="0" parent="1">
+          <mxGeometry x="360" y="180" width="330" height="280" as="geometry" />
+        </mxCell>
+        <mxCell id="p61SQlNbwPxZVqq3MRAO-2" value="" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=none;" vertex="1" parent="p61SQlNbwPxZVqq3MRAO-1">
+          <mxGeometry width="280" height="280" as="geometry" />
+        </mxCell>
+        <mxCell id="p61SQlNbwPxZVqq3MRAO-4" value="Instrument Cluster Application" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="p61SQlNbwPxZVqq3MRAO-1">
+          <mxGeometry x="120" y="120.30272727272728" width="147.31" height="101.81818181818183" as="geometry" />
+        </mxCell>
+        <mxCell id="p61SQlNbwPxZVqq3MRAO-5" value="CAN Socket" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="p61SQlNbwPxZVqq3MRAO-1">
+          <mxGeometry x="190" y="9.99969696969697" width="80" height="50.909090909090914" as="geometry" />
+        </mxCell>
+        <mxCell id="p61SQlNbwPxZVqq3MRAO-6" value="piracer" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="p61SQlNbwPxZVqq3MRAO-1">
+          <mxGeometry x="12.69" y="9.999999999999996" width="87.31" height="36.06" as="geometry" />
+        </mxCell>
+        <mxCell id="p61SQlNbwPxZVqq3MRAO-7" value="linux/can.h (socket)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="p61SQlNbwPxZVqq3MRAO-1">
+          <mxGeometry x="191.34" y="69.39363636363636" width="77.31" height="44.053333333333335" as="geometry" />
+        </mxCell>
+        <mxCell id="p61SQlNbwPxZVqq3MRAO-8" value="Qt" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="p61SQlNbwPxZVqq3MRAO-1">
+          <mxGeometry x="119.99769230769229" y="69.39559440559441" width="63.46153846153846" height="44.05594405594406" as="geometry" />
+        </mxCell>
+        <mxCell id="p61SQlNbwPxZVqq3MRAO-17" value="controller.py" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="p61SQlNbwPxZVqq3MRAO-1">
+          <mxGeometry x="12.69" y="59.39" width="87.31" height="70.61" as="geometry" />
+        </mxCell>
+        <mxCell id="p61SQlNbwPxZVqq3MRAO-18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="p61SQlNbwPxZVqq3MRAO-1" source="p61SQlNbwPxZVqq3MRAO-2" target="p61SQlNbwPxZVqq3MRAO-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

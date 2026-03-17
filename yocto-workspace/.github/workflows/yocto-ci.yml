@@ -1,0 +1,263 @@
+name: Yocto CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      full_build:
+        description: "Run full bitbake build (requires self-hosted runner with ample disk/memory)."
+        required: false
+        default: false
+        type: boolean
+
+env:
+  YOCTO_BUILD_DIR: build-des
+  YOCTO_IMAGE: des-image
+  YOCTO_MACHINE: raspberrypi4-64
+  YOCTO_CACHE_DIR: /home/jeongmin/des-esdk
+
+jobs:
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-22.04
+    outputs:
+      qt_headunit: ${{ steps.filter.outputs.qt_headunit }}
+      qt_app: ${{ steps.filter.outputs.qt_app }} #Qt 앱 변경도 감지하도록
+    steps:
+      - name: Checkout for diff
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Paths filter
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          filters: |
+            qt_headunit:
+              - 'meta-custom/meta-app/**'
+              - 'meta-custom/meta-env/recipes-core/images/des-image.bb'
+              - '.github/workflows/yocto-ci.yml'
+            qt_app:
+              - 'HeadUnit/**'
+              - '.github/workflows/yocto-ci.yml'
+
+  metadata:
+    name: Metadata Sanity
+    runs-on: [self-hosted, Linux, X64]
+    timeout-minutes: 90
+    steps:
+      - name: Prepare runner home
+        run: mkdir -p "$HOME"
+
+      - name: Checkout sources
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            gawk wget git diffstat unzip texinfo gcc-multilib build-essential chrpath socat cpio \
+            python3 python3-pip python3-pexpect xz-utils debianutils iputils-ping python3-git python3-jinja2 \
+            libegl1-mesa xterm locales
+          sudo locale-gen en_US.UTF-8
+
+      - name: Configure build environment
+        run: |
+          threads=$(nproc || echo 2)
+          parallel="-j${threads}"
+          xz="-T0"
+          echo "BB_NUMBER_THREADS=${threads}" >> "${GITHUB_ENV}"
+          echo "PARALLEL_MAKE=${parallel}" >> "${GITHUB_ENV}"
+          echo "XZ_DEFAULTS=${xz}" >> "${GITHUB_ENV}"
+          mkdir -p "${YOCTO_CACHE_DIR}/downloads" "${YOCTO_CACHE_DIR}/sstate-cache"
+          {
+            echo "DL_DIR = \"${YOCTO_CACHE_DIR}/downloads\""
+            echo "SSTATE_DIR = \"${YOCTO_CACHE_DIR}/sstate-cache\""
+            echo "BB_NUMBER_THREADS = \"${threads}\""
+            echo "PARALLEL_MAKE = \"${parallel}\""
+            echo "XZ_DEFAULTS = \"${xz}\""
+            echo "BB_DISKMON_DIRS = \"\""
+          } > "${YOCTO_BUILD_DIR}/conf/auto.conf"
+
+      - name: Show disk availability
+        run: df -h
+
+      - name: Parse metadata
+        run: |
+          source poky/oe-init-build-env ${YOCTO_BUILD_DIR}
+          bitbake -p
+          bitbake-layers show-layers
+          bitbake -n ${YOCTO_IMAGE}
+
+  full-build:
+    name: Full Image Build
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.full_build == 'true' }}
+    runs-on: [self-hosted, Linux, X64]
+    timeout-minutes: 720
+    steps:
+      - name: Prepare runner home
+        run: mkdir -p "$HOME"
+
+      - name: Checkout sources
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Configure build environment
+        run: |
+          threads=$(nproc || echo 2)
+          parallel="-j${threads}"
+          xz="-T0"
+          echo "BB_NUMBER_THREADS=${threads}" >> "${GITHUB_ENV}"
+          echo "PARALLEL_MAKE=${parallel}" >> "${GITHUB_ENV}"
+          echo "XZ_DEFAULTS=${xz}" >> "${GITHUB_ENV}"
+          mkdir -p "${YOCTO_CACHE_DIR}/downloads" "${YOCTO_CACHE_DIR}/sstate-cache"
+          {
+            echo "DL_DIR = \"${YOCTO_CACHE_DIR}/downloads\""
+            echo "SSTATE_DIR = \"${YOCTO_CACHE_DIR}/sstate-cache\""
+            echo "BB_NUMBER_THREADS = \"${threads}\""
+            echo "PARALLEL_MAKE = \"${parallel}\""
+            echo "XZ_DEFAULTS = \"${xz}\""
+            echo "BB_DISKMON_DIRS = \"\""
+          } > "${YOCTO_BUILD_DIR}/conf/auto.conf"
+
+      - name: Restore downloads cache
+        uses: actions/cache@v4
+        with:
+          key: downloads-${{ runner.os }}-${{ hashFiles('meta-custom/**/*.bb', 'meta-custom/**/*.bbappend', 'meta-custom/**/*.bbclass', 'build-des/conf/*.conf') }}
+          restore-keys: |
+            downloads-${{ runner.os }}-
+          path: ${{ env.YOCTO_CACHE_DIR }}/downloads
+
+      - name: Restore sstate cache
+        uses: actions/cache@v4
+        with:
+          key: sstate-${{ runner.os }}-${{ hashFiles('meta-custom/**/*.bb', 'meta-custom/**/*.bbappend', 'meta-custom/**/*.bbclass', 'build-des/conf/*.conf') }}
+          restore-keys: |
+            sstate-${{ runner.os }}-
+          path: ${{ env.YOCTO_CACHE_DIR }}/sstate-cache
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            gawk wget git diffstat unzip texinfo gcc-multilib build-essential chrpath socat cpio \
+            python3 python3-pip python3-pexpect xz-utils debianutils iputils-ping python3-git python3-jinja2 \
+            libegl1-mesa xterm locales
+          sudo locale-gen en_US.UTF-8
+
+      - name: Build Yocto image
+        run: |
+          source poky/oe-init-build-env ${YOCTO_BUILD_DIR}
+          bitbake ${YOCTO_IMAGE}
+
+      - name: Archive WIC artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.YOCTO_IMAGE }}-${{ env.YOCTO_MACHINE }}
+          path: |
+            ${{ env.YOCTO_BUILD_DIR }}/tmp*/deploy/images/${{ env.YOCTO_MACHINE }}/*.wic*
+            ${{ env.YOCTO_BUILD_DIR }}/tmp*/deploy/images/${{ env.YOCTO_MACHINE }}/*.sdimg
+          if-no-files-found: warn
+
+  #eSDK로 CMake 빌드만 빠르게 확인 Qt 앱 빌드 추가
+  qt-app-cmake:
+    name: Qt App CMake Build
+    needs: changes
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.qt_app == 'true' }}
+    runs-on: [self-hosted, Linux, X64]
+    timeout-minutes: 60
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Configure & build with eSDK toolchain
+        shell: bash
+        run: |
+          source /home/jeongmin/des-esdk/environment-setup-cortexa72-oe-linux
+          cmake -S HeadUnit -B headunit-build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_TOOLCHAIN_FILE=${OECORE_NATIVE_SYSROOT}/usr/share/cmake/OEToolchainConfig.cmake
+          cmake --build headunit-build -- -j"$(nproc || echo 2)"
+
+  qt-headunit:
+    name: Qt Headunit Build
+    needs: changes
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.qt_headunit == 'true' }}
+    runs-on: [self-hosted, Linux, X64]
+    timeout-minutes: 240
+    steps:
+      - name: Prepare runner home
+        run: mkdir -p "$HOME"
+
+      - name: Checkout sources
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Configure build environment
+        run: |
+          threads=$(nproc || echo 2)
+          parallel="-j${threads}"
+          xz="-T0"
+          echo "BB_NUMBER_THREADS=${threads}" >> "${GITHUB_ENV}"
+          echo "PARALLEL_MAKE=${parallel}" >> "${GITHUB_ENV}"
+          echo "XZ_DEFAULTS=${xz}" >> "${GITHUB_ENV}"
+          mkdir -p "${YOCTO_CACHE_DIR}/downloads" "${YOCTO_CACHE_DIR}/sstate-cache"
+          {
+            echo "DL_DIR = \"${YOCTO_CACHE_DIR}/downloads\""
+            echo "SSTATE_DIR = \"${YOCTO_CACHE_DIR}/sstate-cache\""
+            echo "BB_NUMBER_THREADS = \"${threads}\""
+            echo "PARALLEL_MAKE = \"${parallel}\""
+            echo "XZ_DEFAULTS = \"${xz}\""
+            echo "BB_DISKMON_DIRS = \"\""
+          } > "${YOCTO_BUILD_DIR}/conf/auto.conf"
+
+      - name: Restore downloads cache
+        uses: actions/cache@v4
+        with:
+          key: downloads-${{ runner.os }}-${{ hashFiles('meta-custom/meta-app/**/*', 'meta-custom/meta-env/recipes-core/images/des-image.bb', 'build-des/conf/*.conf') }}
+          restore-keys: |
+            downloads-${{ runner.os }}-
+          path: ${{ env.YOCTO_CACHE_DIR }}/downloads
+
+      - name: Restore sstate cache
+        uses: actions/cache@v4
+        with:
+          key: sstate-${{ runner.os }}-${{ hashFiles('meta-custom/meta-app/**/*', 'meta-custom/meta-env/recipes-core/images/des-image.bb', 'build-des/conf/*.conf') }}
+          restore-keys: |
+            sstate-${{ runner.os }}-
+          path: ${{ env.YOCTO_CACHE_DIR }}/sstate-cache
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            gawk wget git diffstat unzip texinfo gcc-multilib build-essential chrpath socat cpio \
+            python3 python3-pip python3-pexpect xz-utils debianutils iputils-ping python3-git python3-jinja2 \
+            libegl1-mesa xterm locales
+          sudo locale-gen en_US.UTF-8
+
+      - name: Build headunit recipe
+        env:
+          BB_ENV_PASSTHROUGH_ADDITIONS: BB_NUMBER_THREADS PARALLEL_MAKE XZ_DEFAULTS
+        run: |
+          source poky/oe-init-build-env ${YOCTO_BUILD_DIR}
+          bitbake headunit
+
+      - name: Upload headunit package
+        uses: actions/upload-artifact@v4
+        with:
+          name: headunit-${{ env.YOCTO_MACHINE }}
+          path: |
+            ${{ env.YOCTO_BUILD_DIR }}/tmp*/deploy/rpm/**/*headunit*.rpm
+            ${{ env.YOCTO_BUILD_DIR }}/tmp*/deploy/deb/**/headunit_*.*deb
+            ${{ env.YOCTO_BUILD_DIR }}/tmp*/deploy/ipk/**/headunit_*.*ipk
+          if-no-files-found: warn

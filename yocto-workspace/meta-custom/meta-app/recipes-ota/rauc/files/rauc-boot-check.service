@@ -1,0 +1,17 @@
+[Unit]
+Description=RAUC A/B Boot Check (bootcount management)
+Documentation=https://rauc.io
+After=local-fs.target
+Before=sysinit.target
+DefaultDependencies=no
+ConditionPathExists=/boot/rauc.state
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/sbin/rauc-boot-check.sh
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=sysinit.target

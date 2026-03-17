@@ -1,0 +1,46 @@
+meta-app
+========
+
+Application layer that packages the Qt-based head unit and instrument cluster
+for the DES infotainment stack.
+
+Provided recipes
+----------------
+
+* ``recipes-des/headunit/headunit.bb`` – builds the modular Qt head-unit UI,
+  installs its assets, and drops ``headunit.service`` to launch it under Weston.
+* ``recipes-des/instrument-cluster/instrument-cluster.bb`` – builds the Qt
+  instrument cluster (`appIC`) from the external source tree and ships the
+  matching ``instrument-cluster.service``.
+
+External source layout
+----------------------
+
+Both recipes stage their sources from sibling workspaces so developers can keep
+writing code outside Yocto:
+
+* ``HEADUNIT_SRC ?= "${TOPDIR}/../../Head-Unit"``
+* ``IC_SRC ?= "${TOPDIR}/../../DES_Instrument-Cluster/Cluster-app"``
+
+Ensure the paths are accessible in your build environment or override them in a
+``.bbappend``/``local.conf`` entry.
+
+Integration
+-----------
+
+Add the layer to the build configuration:
+
+.. code-block:: bash
+
+   bitbake-layers add-layer meta-custom/meta-app
+
+The image recipe ``meta-custom/meta-env/recipes-core/images/des-image.bb``
+already depends on ``headunit`` and ``instrument-cluster``; custom images can do
+so with:
+
+.. code-block:: bitbake
+
+   IMAGE_INSTALL:append = " headunit instrument-cluster "
+
+Systemd units are enabled automatically on install.  Inspect their runtime state
+with ``systemctl status headunit instrument-cluster`` on the target.

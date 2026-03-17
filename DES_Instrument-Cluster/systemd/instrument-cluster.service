@@ -1,0 +1,30 @@
+[Unit]
+Description=Instrument Cluster Application - Wayland Client
+After=multi-user.target weston.service headunit.service
+Requires=weston.service
+
+[Service]
+Type=simple
+# Wait for HeadUnit and Weston to initialize
+ExecStartPre=/bin/sleep 3
+# Use Wayland for compositor-managed rendering on HDMI-A-2
+Environment=QT_QPA_PLATFORM=wayland
+Environment=WAYLAND_DISPLAY=wayland-0
+Environment=XDG_RUNTIME_DIR=/run
+Environment=QT_QPA_FONTDIR=/usr/share/fonts
+Environment=QT_LOGGING_RULES=qt.qpa.*=true;qt.waylandclient.*=true
+Environment=LANG=C.UTF-8
+Environment=LC_ALL=C.UTF-8
+ExecStart=/usr/bin/appIC
+Restart=on-failure
+RestartSec=5
+User=root
+Group=root
+# Add wayland group for socket access
+SupplementaryGroups=wayland
+
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=graphical.target

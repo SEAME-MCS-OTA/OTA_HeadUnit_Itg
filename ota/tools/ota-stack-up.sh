@@ -14,6 +14,7 @@ set -euo pipefail
 # Use repository root for compose/.env paths.
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 COMPOSE_FILE="${ROOT_DIR}/docker-compose.ota-stack.yml"
+LEGACY_OTA_GH_COMPOSE="${ROOT_DIR}/ota/server/docker-compose.yml"
 ENV_FILE="${ROOT_DIR}/.env"
 
 cd "${ROOT_DIR}"
@@ -21,6 +22,11 @@ cd "${ROOT_DIR}"
 # Disable compose Bake path by default to avoid buildx warnings on hosts
 # where docker-buildx-plugin is not installed.
 export COMPOSE_BAKE="${COMPOSE_BAKE:-false}"
+# Enable local MQTT broker profile only when server is configured
+# to use the compose-local broker alias.
+if [[ "${OTA_GH_MQTT_BROKER_HOST:-}" == "ota_gh_mosquitto" ]]; then
+  export COMPOSE_PROFILES="${COMPOSE_PROFILES:-local-broker}"
+fi
 
 detect_host_ip() {
   local ip=""
@@ -58,6 +64,15 @@ if [[ -z "${OTA_GH_FIRMWARE_BASE_URL:-}" ]]; then
   fi
 fi
 
+# If legacy OTA_GH stack is running, it usually occupies 8080/1883 and
+# prevents this unified stack from starting. Stop it automatically.
+if [[ "${OTA_STACK_SKIP_LEGACY_DOWN:-0}" != "1" ]] && [[ -f "${LEGACY_OTA_GH_COMPOSE}" ]]; then
+  if docker compose -f "${LEGACY_OTA_GH_COMPOSE}" ps -q | grep -q .; then
+    echo "[info] Stopping legacy OTA_GH stack to avoid port conflicts..."
+    docker compose -f "${LEGACY_OTA_GH_COMPOSE}" down
+  fi
+fi
+
 docker compose -f "${COMPOSE_FILE}" up -d --build
 
 echo
@@ -66,5 +81,5 @@ docker compose -f "${COMPOSE_FILE}" ps
 echo
 echo "OTA_GH API:        http://localhost:${OTA_GH_SERVER_PORT:-8080}"
 echo "OTA_GH Dashboard:  http://localhost:${OTA_GH_DASHBOARD_PORT:-3001}"
-echo "MQTT Broker TCP:   localhost:${OTA_GH_MQTT_PORT:-1883}"
-echo "MQTT Broker WS:    localhost:${OTA_GH_MQTT_WS_PORT:-9001}"
+echo "OTA_VLM Backend:   http://localhost:${OTA_VLM_BACKEND_PORT:-4000}"
+echo "OTA_VLM Frontend:  http://localhost:${OTA_VLM_FRONTEND_PORT:-5173}"

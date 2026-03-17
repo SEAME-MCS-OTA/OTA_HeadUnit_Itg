@@ -1,0 +1,23 @@
+# Use a base image for cross-compilation from Intel x86-64 host to ARM64 target
+FROM --platform=linux/amd64 debian:bookworm
+
+# Install build dependencies and cross-compilation toolchain for ARM64
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    qt6-base-dev \
+    qt6-declarative-dev \
+    libxkbcommon-dev \
+    gcc-aarch64-linux-gnu \
+    g++-aarch64-linux-gnu \
+    --no-install-recommends && \
+    rm -rf /var/lib/apt/lists/*
+
+# Set environment variables for cross-compilation
+ENV CC=aarch64-linux-gnu-gcc
+ENV CXX=aarch64-linux-gnu-g++
+ENV AR=aarch64-linux-gnu-ar
+ENV STRIP=aarch64-linux-gnu-strip
+
+# Set a working directory
+WORKDIR /app

@@ -1,0 +1,17 @@
+[Unit]
+Description=PiRacer gamepad controller
+After=network.target can1.service
+Wants=can1.service
+
+[Service]
+Type=simple
+WorkingDirectory=/usr/lib/piracer-controller
+ExecStart=/usr/bin/python3 controller.py
+Restart=on-failure
+RestartSec=2
+
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

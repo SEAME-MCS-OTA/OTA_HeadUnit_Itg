@@ -1,0 +1,14 @@
+[Unit]
+Description=WiFi Auto-Enable Service
+Before=network.target
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/rfkill unblock wifi
+ExecStart=/usr/sbin/rfkill unblock wlan
+ExecStart=/usr/bin/ip link set wlan0 up
+RemainAfterExit=yes
+
+[Install]
+WantedBy=sysinit.target

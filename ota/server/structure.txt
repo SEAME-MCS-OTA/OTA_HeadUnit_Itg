@@ -1,0 +1,48 @@
+ota/server/
+├── .env                          # 루트 환경 변수
+├── .gitignore
+├── README.md
+├── docker-compose.yml
+├── quickstart.sh
+├── schema.sql
+├── structure.txt                 # 이 파일
+├── client/                       # OTA 클라이언트
+│   ├── .env
+│   ├── README.md
+│   ├── client.py
+│   ├── config.py
+│   ├── requirements.txt
+│   └── (runtime 생성 경로는 생략: installed_app/, installed_app_backup_*/, __pycache__/)
+├── dashboard/                    # 모니터링 대시보드(React + Vite)
+│   ├── .env
+│   ├── .gitignore
+│   ├── index.html
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── postcss.config.js
+│   ├── tailwind.config.js
+│   ├── vite.config.js
+│   ├── src/
+│   │   ├── App.jsx
+│   │   ├── index.css
+│   │   └── main.jsx
+│   └── (runtime/로컬 생성 경로는 생략: node_modules/, dashboard.log, .dashboard.pid)
+├── firmware_files/               # 서버 배포 펌웨어 저장 디렉토리 (파일 목록은 실행/배포 시 변경)
+├── mosquitto/                    # MQTT 브로커 설정
+│   └── mosquitto.conf
+├── scripts/                      # 유틸리티 스크립트
+│   ├── check_status.sh
+│   ├── create_firmware.sh
+│   ├── upload_firmware_1.0.1.sh
+│   └── sample_app/
+│       ├── README.md
+│       ├── app.py
+│       └── version.txt
+└── server/                       # OTA 서버(Flask)
+    ├── .env
+    ├── Dockerfile
+    ├── app.py
+    ├── config.py
+    ├── models.py
+    ├── mqtt_handler.py
+    └── requirements.txt

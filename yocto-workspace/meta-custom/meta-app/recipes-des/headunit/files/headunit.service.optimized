@@ -1,0 +1,64 @@
+[Unit]
+Description=Head Unit Application (Optimized Fast Boot)
+Documentation=https://github.com/SEA-ME/DES_Head-Unit
+
+# Minimal dependencies - start as soon as Weston socket exists
+After=weston.service
+Wants=weston.service
+
+# DON'T wait for Plymouth - let it play in parallel
+# DON'T wait for other services
+
+# Start before Plymouth quits (so app is ready when splash ends)
+Before=plymouth-quit-timer.service
+
+[Service]
+Type=simple
+
+# Wait for Weston socket with short timeout
+ExecStartPre=/bin/sh -c 'timeout 3 sh -c "while [ ! -S /run/wayland-0 ]; do sleep 0.05; done"'
+
+# Wayland configuration for HDMI-A-1 (Left screen)
+Environment=QT_QPA_PLATFORM=wayland
+Environment=WAYLAND_DISPLAY=wayland-0
+Environment=XDG_RUNTIME_DIR=/run
+Environment=QT_WAYLAND_DISABLE_WINDOWDECORATION=1
+Environment=QT_WAYLAND_FORCE_FULLSCREEN=1
+
+# Performance optimizations
+Environment=QT_QPA_FONTDIR=/usr/share/fonts
+Environment=QT_LOGGING_RULES=qt.qpa.*=false;qt.qml.connections=false
+Environment=QT_ENABLE_GLYPH_CACHE_WORKAROUND=1
+Environment=QT_QUICK_BACKEND=software  # or 'opengl' for GPU
+
+# Locale
+Environment=LANG=C.UTF-8
+Environment=LC_ALL=C.UTF-8
+
+# Launch application
+ExecStart=/usr/bin/HeadUnitApp
+
+# Restart policy
+Restart=on-failure
+RestartSec=2
+
+# Permissions
+User=root
+Group=root
+SupplementaryGroups=video render input wayland
+
+# Performance tuning
+Nice=-5
+IOSchedulingClass=best-effort
+IOSchedulingPriority=0
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=headunit
+
+# Timeout
+TimeoutStartSec=15
+
+[Install]
+WantedBy=graphical.target

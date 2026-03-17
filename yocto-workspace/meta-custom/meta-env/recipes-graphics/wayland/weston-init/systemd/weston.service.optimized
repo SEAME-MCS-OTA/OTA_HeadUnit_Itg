@@ -1,0 +1,47 @@
+[Unit]
+Description=Weston Wayland Compositor (Optimized Fast Boot)
+Documentation=man:weston(1)
+
+# Start as soon as possible, DON'T wait for Plymouth
+After=systemd-user-sessions.service dbus.socket
+# Optional: better to start even if these fail
+Wants=dbus.socket
+
+# Conflict with other display managers
+Conflicts=plymouth-quit.service plymouth-quit-wait.service
+
+[Service]
+Type=notify
+# Don't wait for Plymouth - start immediately in background
+ExecStart=/usr/bin/weston --modules=systemd-notify.so
+
+# Weston configuration
+Environment=XDG_RUNTIME_DIR=/run
+Environment=WAYLAND_DISPLAY=wayland-0
+
+# Restart on failure
+Restart=on-failure
+RestartSec=2
+
+# Performance optimization
+Nice=-10
+IOSchedulingClass=realtime
+IOSchedulingPriority=0
+
+# Proper cleanup
+ExecStopPost=/usr/bin/rm -f /run/wayland-0 /run/wayland-0.lock
+
+# Security
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/run /dev/dri /dev/input
+SupplementaryGroups=video input render
+
+# Timeout
+TimeoutStartSec=10
+TimeoutStopSec=5
+
+[Install]
+WantedBy=graphical.target
+Alias=display-manager.service

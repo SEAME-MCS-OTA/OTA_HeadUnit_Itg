@@ -1,0 +1,14 @@
+# Plymouth daemon configuration
+# Set DES theme as default
+
+[Daemon]
+Theme=des
+ShowDelay=0
+DeviceTimeout=30
+# Wait for DRM device to be ready
+UseKMS=true
+# Disable early initialization to wait for framebuffer
+EarlyInit=false
+# Keep VT allocation on tty7 for smooth handoff to Weston
+# This prevents automatic switch to tty1 after Plymouth quits
+VT=7
