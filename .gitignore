@@ -1,14 +1,5 @@
-yocto-workspace/build-des/tmp*/
-yocto-workspace/build-des/cache/
-yocto-workspace/build-des/downloads/
-yocto-workspace/build-des/sstate-cache/
-yocto-workspace/.yocto-cache/
-Head-Unit/build/
 .vscode/
 .claude/
-headunit-build/
 ota/server/release.env
-ota/client/ota-client.env
-OTA_VLM/
 .env
 out/
