@@ -133,7 +133,7 @@ def _network_iface_and_ip() -> Tuple[str, str]:
     return "wlan0", "-"
 
 
-def _default_gateway_and_iface() -> Tuple[str, str]:
+def _default_gateway_and_iface() -> Tuple[str, str]:    
     out = _safe_cmd_output(["ip", "route", "show", "default"])
     for line in out.splitlines():
         line = line.strip()
@@ -684,6 +684,8 @@ def verify_command_signature(
     expected_size: Optional[int],
     signature: Optional[Dict[str, Any]],
 ) -> Tuple[bool, Optional[str], str]:
+    
+    # signature 기본 검증
     required = _cfg_bool(cfg.get("require_command_signature"), True)
     if not signature:
         if required:
@@ -710,6 +712,7 @@ def verify_command_signature(
             f"key_id mismatch expected={expected_key_id} got={key_id}",
         )
 
+    # signature 검증에 필요한 payload 생성
     pubkey_path = str(cfg.get("signature_public_key_path") or "/etc/ota-backend/keys/ota-signing.pub").strip()
     payload = command_payload_bytes(
         ota_id=ota_id,
@@ -718,6 +721,7 @@ def verify_command_signature(
         expected_sha256=expected_sha256,
         expected_size=int(expected_size or 0),
     )
+    # signature 검증 (payload + signature + public key 검증)
     ok, detail = _verify_ed25519_signature(payload, sig_value, pubkey_path)
     if not ok:
         return False, "SIGNATURE_VERIFY_FAILED", detail
@@ -741,10 +745,12 @@ def _target_slot_device(cfg: Dict[str, Any]) -> Tuple[Optional[str], Optional[st
 
 
 def post_write_verify(cfg: Dict[str, Any], on_log) -> Tuple[bool, Optional[str], str]:
+    # 1) post_write_verify_enabled 설정 확인
     enabled = _cfg_bool(cfg.get("post_write_verify_enabled"), True)
     if not enabled:
         return True, None, "post-write verification disabled"
 
+    # 2) 검증 대상 슬롯과 디바이스 경로 확인
     target_slot, target_dev = _target_slot_device(cfg)
     if not target_slot or not target_dev:
         return False, "POST_WRITE_SLOT_UNKNOWN", "cannot infer target slot/device for post-write verify"
@@ -752,11 +758,13 @@ def post_write_verify(cfg: Dict[str, Any], on_log) -> Tuple[bool, Optional[str],
     timeout_sec = _cfg_int(cfg.get("post_write_verify_timeout_sec", 120), 120)
     on_log(f"POST_WRITE VERIFY START slot={target_slot} dev={target_dev}")
 
+    # 3) sync 호출 (디스크 캐시 플러시)
     try:
         subprocess.run(["sync"], check=False)
     except Exception:
         pass
 
+    # 4) e2fsck 호출하여 파일시스템 무결성 검사 (최대 timeout_sec 만큼 대기)
     try:
         proc = subprocess.run(
             ["e2fsck", "-pf", target_dev],
@@ -833,6 +841,7 @@ def download_with_retries(url: str, dest: str, retries: int, timeout: int,
             time.sleep(2 * attempt)
     return "HTTP_ERROR", last_status
 
+# RAUC status를 호출하여 JSON으로 파싱하는 함수
 def rauc_status_json(timeout_sec: float = 1.5) -> Dict[str, Any]:
     try:
         out = subprocess.check_output(
