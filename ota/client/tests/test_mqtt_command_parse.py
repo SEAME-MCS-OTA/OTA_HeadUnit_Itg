@@ -1,7 +1,7 @@
 from app.mqtt_utils import parse_mqtt_update_command
 
 
-def test_parse_ota_gh_style_payload():
+def test_parse_server_style_payload():
     payload = {
         "command": "update",
         "ota_id": "ota-20260224-0001",

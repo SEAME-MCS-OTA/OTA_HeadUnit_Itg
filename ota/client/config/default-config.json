@@ -3,7 +3,7 @@
   "device_model": "raspberrypi4",
   "device_hw_rev": "1.2",
   "device_serial": "",
-  "collector_url": "http://192.168.86.29:4000/ingest",
+  "collector_url": "",
   "ota_type": "PARTIAL",
   "ota_attempt": 1,
   "vehicle_brand": "Volkswagen",

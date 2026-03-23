@@ -26,14 +26,14 @@
 
 - OTA 시작 트리거 (`/ota/start`)
 - 디바이스 재부팅 (`/ota/reboot`)
-- 업로드 기능(OTA_GH firmware upload)은 같은 화면의 "Admin Mode"로 포함
-  - 단, 로컬 `ota-backend` API에는 업로드 엔드포인트가 없으므로 OTA_GH API를 별도 호출해야 함
+- 업로드 기능(외부 OTA 서버 firmware upload)은 같은 화면의 "Admin Mode"로 포함
+  - 단, 로컬 `ota-backend` API에는 업로드 엔드포인트가 없으므로 외부 OTA 서버 API를 별도 호출해야 함
   - 최소 요구 API: `/api/v1/admin/firmware`, `/api/v1/firmware`
   - 네트워크/서버 주소가 없으면 업로드 UI는 비활성 상태로 표시
 
 ## 4) Out-of-Scope (Step 1 기준)
 
-- OTA_GH 대시보드 수준의 전체 운영 화면(차량 전체 목록, 지도/통계 모니터링)
+- 외부 OTA 서버 대시보드 수준의 전체 운영 화면(차량 전체 목록, 지도/통계 모니터링)
 - 사용자 인증/권한 시스템 신규 도입
 - OTA 실패 자동복구 로직 변경 (RAUC/ota-backend 로직 수정은 제외)
 - 디자인 시스템 전면 개편
@@ -65,7 +65,7 @@
 - `last_error`
 - `ip`, `ip_source`
 
-### 5.2 OTA_GH Admin API (for upload/admin mode)
+### 5.2 External OTA Admin API (for upload/admin mode)
 
 - Base URL: runtime config (예: `http://<server-ip>:8080`)
 - `POST /api/v1/admin/firmware` (multipart upload)
@@ -77,12 +77,12 @@
   - 로컬 상태 조회 전용 + 트리거/재부팅
   - 기본 모드
 - `Admin Mode`:
-  - Viewer Mode + OTA_GH 업로드 기능
+  - Viewer Mode + 외부 OTA 서버 업로드 기능
   - 서버 주소가 설정된 경우에만 활성
 
 ## 7) Acceptance Criteria (Step 1)
 
 - Home 우상단에 `OTA` 진입 버튼 위치/동작이 명확히 정의됨
 - 상태조회 표시 필드와 소스 API가 문서화됨
-- 관리자 기능 범위(트리거/재부팅/업로드)와 제약(업로드는 OTA_GH API 의존)이 확정됨
+- 관리자 기능 범위(트리거/재부팅/업로드)와 제약(업로드는 외부 OTA 서버 API 의존)이 확정됨
 - 다음 단계 구현(파일 추가/연결)이 바로 가능한 수준으로 범위 고정됨

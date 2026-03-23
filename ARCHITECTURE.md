@@ -7,7 +7,8 @@
 
 1. 차량 UI/앱 체계(Head-Unit/Instrument-Cluster)는 DES 구현 유지
 2. OTA는 RAUC 기반 A/B 업데이트로 통합
-3. 서버는 OTA_GH(제어) + OTA_VLM(관제)로 분리
+3. 서버는 OTA 제어 API + 모니터링/수집 서비스로 분리
+   - 구현/운영 리포지토리: `OTA_SERVER_Itg`
 4. OTA 명령/번들 검증을 강화한 보안 경로 운영
 
 ## 2. 상위 구조
@@ -33,24 +34,24 @@ flowchart LR
   end
 
   subgraph Server[Server Stack]
-    GH[OTA_GH Flask API]
+    CTRL[OTA Control API]
     PG[(PostgreSQL)]
     MQTT[(Mosquitto)]
-    DASH[OTA_GH Dashboard]
-    VLM_BE[OTA_VLM Backend]
-    VLM_DB[(MySQL)]
-    VLM_FE[OTA_VLM Frontend]
+    DASH[OTA Dashboard]
+    MON_BE[Monitoring Backend]
+    MON_DB[(Monitoring DB)]
+    MON_FE[Monitoring Dashboard]
 
-    GH --> PG
-    GH <--> MQTT
-    DASH --> GH
-    VLM_BE --> VLM_DB
-    VLM_FE --> VLM_BE
-    GH --> VLM_BE
+    CTRL --> PG
+    CTRL <--> MQTT
+    DASH --> CTRL
+    MON_BE --> MON_DB
+    MON_FE --> MON_BE
+    CTRL --> MON_BE
   end
 
   Admin[Operator] --> DASH
-  GH -->|HTTP-first / MQTT fallback| OBE
+  CTRL -->|HTTP-first / MQTT fallback| OBE
   OBE -->|status/progress/events| MQTT
 ```
 
@@ -93,7 +94,7 @@ flowchart LR
 
 ## 4. 서버 아키텍처
 
-## 4.1 OTA_GH (제어 plane)
+## 4.1 OTA 제어 API (제어 plane)
 
 역할:
 - 펌웨어 업로드/메타데이터 저장
@@ -107,7 +108,7 @@ flowchart LR
 - `GET /api/v1/vehicles`
 - `GET /health`
 
-## 4.2 OTA_VLM (관제 plane)
+## 4.2 모니터링/수집 서비스 (관제 plane)
 
 역할:
 - 이벤트 수집 및 관제 대시보드 제공
@@ -126,17 +127,17 @@ flowchart LR
 ## 5.1 정상 시나리오
 
 1. 운영자가 `.raucb` 업로드
-2. OTA_GH가 target firmware 결정
-3. OTA_GH가 OTA 명령 payload 생성
-4. OTA_GH가 payload 서명(ed25519)
-5. OTA_GH -> 디바이스 HTTP `/ota/start` 시도
+2. OTA 제어 API가 target firmware 결정
+3. OTA 제어 API가 OTA 명령 payload 생성
+4. OTA 제어 API가 payload 서명(ed25519)
+5. OTA 제어 API -> 디바이스 HTTP `/ota/start` 시도
 6. HTTP 실패 시 MQTT command 발행
 7. ota-backend가 번들 다운로드
 8. ota-backend가 signature + SHA256/size 검증
 9. RAUC가 inactive 슬롯에 설치
 10. ota-backend post-write 검증 수행
 11. 재부팅/commit 처리
-12. 상태/결과가 `ota/server`/`ota/OTA_VLM`로 수집
+12. 상태/결과가 외부 서버 스택(OTA 제어 API/관제 서비스)으로 수집
 
 ## 5.2 실패 및 보호 경로
 
@@ -184,7 +185,7 @@ Yocto 레시피를 통해 공개키/인증서가 런타임에 반영된다.
 ## 7.3 초기 배포 vs OTA 배포
 
 - 초기 배포: `bmaptool`로 `.wic.bz2`를 디스크에 직접 기록
-- OTA 배포: OTA_GH 업로드 + trigger -> 디바이스 RAUC 설치
+- OTA 배포: OTA 제어 API 업로드 + trigger -> 디바이스 RAUC 설치
 
 ## 8. 설정 책임 분리
 
@@ -210,13 +211,13 @@ Yocto 레시피를 통해 공개키/인증서가 런타임에 반영된다.
 1. 부팅 슬롯 판단은 반드시 `cmdline.txt` 기준으로 통일
 2. 키 재생성 시 서버/디바이스 키 동기화 필수
 3. 빌드 디스크 여유는 40~50GB 이상 확보 권장
-4. 포트 충돌 시 기존 compose 스택 정리 후 기동
+4. 서버 스택 기동/중지는 `OTA_SERVER_Itg` 운영 절차를 기준으로 관리
 5. E2E 결과는 디바이스 로그 + 서버 이력 모두로 판정
 
 ## 10. 추후 개선 후보
 
 1. OTA 실패 시 자동 진단 리포트 표준화
-2. CI에서 OTA_GH + ota-backend contract test 자동화
+2. CI에서 OTA 제어 API + ota-backend contract test 자동화
 3. OTA 정책(강제/유예/배터리/주행상태) 룰 엔진화
 4. 관제 대시보드의 실패 원인 분류 정밀도 개선
 
