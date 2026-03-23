@@ -5,6 +5,7 @@
 #include "backend/music/music_player.h"
 #include "backend/gear/gear_client.h"
 #include "backend/weather/weather_service.h"
+#include "backend/ota/ota_status_client.h"
 #include "backend/bluetooth/bluetooth_manager.h"
 #include "backend/bluetooth/bluetooth_audio_player.h"
 #include "backend/vehicle/vehicle_data_client.h"
@@ -59,6 +60,7 @@ class HeadUnit : public QObject {
         s_ptr<MusicPlayer> _musicPlayer = nullptr;
         s_ptr<GearClient> _gearClient = nullptr;
         s_ptr<WeatherService> _weatherService = nullptr;
+        s_ptr<OtaStatusClient> _otaStatusClient = nullptr;
         s_ptr<BluetoothManager> _bluetoothManager = nullptr;
         s_ptr<BluetoothAudioPlayer> _bluetoothAudioPlayer = nullptr;
         s_ptr<VehicleDataClient> _vehicleDataClient = nullptr;

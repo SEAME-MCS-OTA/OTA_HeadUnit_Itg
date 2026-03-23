@@ -4,7 +4,13 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
-SRC_URI = "file://ota-backend"
+SRC_URI = " \
+    file://ota-backend \
+    file://ota-journal-prepare.sh \
+    file://ota-journal-prepare.service \
+    file://10-ota-data-journal.conf \
+    file://99-persistent-data.conf \
+"
 
 # Source from the project tree
 OTA_BACKEND_SRC ?= "${TOPDIR}/../../ota/client"
@@ -12,7 +18,7 @@ OTA_ED25519_PUB ?= "${TOPDIR}/../../ota/keys/ed25519/ota-signing.pub"
 
 inherit systemd
 
-SYSTEMD_SERVICE:${PN} = "ota-backend.service"
+SYSTEMD_SERVICE:${PN} = "ota-backend.service ota-journal-prepare.service"
 SYSTEMD_AUTO_ENABLE:${PN} = "enable"
 
 RDEPENDS:${PN} += " \
@@ -29,9 +35,13 @@ FILES:${PN} += " \
     /usr/bin/ota-backend \
     /usr/lib/ota-backend \
     /usr/sbin/ota-backend-prepare-config.sh \
+    /usr/sbin/ota-journal-prepare.sh \
     /usr/lib/systemd/system/ota-backend.service \
+    /usr/lib/systemd/system/ota-journal-prepare.service \
     /etc/ota-backend \
     /etc/ota-backend/keys \
+    /etc/systemd/system/systemd-journald.service.d/10-ota-data-journal.conf \
+    /etc/systemd/journald.conf.d/99-persistent-data.conf \
     "
 
 do_install() {
@@ -64,10 +74,21 @@ do_install() {
     if [ -f ${OTA_BACKEND_SRC}/systemd/ota-backend-prepare-config.sh ]; then
         install -m 0755 ${OTA_BACKEND_SRC}/systemd/ota-backend-prepare-config.sh ${D}/usr/sbin/ota-backend-prepare-config.sh
     fi
+    install -m 0755 ${WORKDIR}/ota-journal-prepare.sh ${D}/usr/sbin/ota-journal-prepare.sh
 
     # Systemd service
     install -d ${D}/usr/lib/systemd/system
     if [ -f ${OTA_BACKEND_SRC}/systemd/ota-backend.service ]; then
         install -m 0644 ${OTA_BACKEND_SRC}/systemd/ota-backend.service ${D}/usr/lib/systemd/system/ota-backend.service
     fi
+    install -m 0644 ${WORKDIR}/ota-journal-prepare.service ${D}/usr/lib/systemd/system/ota-journal-prepare.service
+
+    # Ensure journald starts after ota-journal-prepare so /data is ready.
+    install -d ${D}/etc/systemd/system/systemd-journald.service.d
+    install -m 0644 ${WORKDIR}/10-ota-data-journal.conf \
+        ${D}/etc/systemd/system/systemd-journald.service.d/10-ota-data-journal.conf
+
+    # journald persistent storage policy
+    install -d ${D}/etc/systemd/journald.conf.d
+    install -m 0644 ${WORKDIR}/99-persistent-data.conf ${D}/etc/systemd/journald.conf.d/99-persistent-data.conf
 }

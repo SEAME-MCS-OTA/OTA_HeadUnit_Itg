@@ -16,7 +16,6 @@ DEPENDS = "\
     qtdeclarative-native \
     qtmultimedia \
     qtwayland \
-    qtwayland-native \
     qtshadertools-native \
     wayland \
 "

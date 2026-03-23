@@ -20,6 +20,7 @@ ApplicationWindow {
 
     property var playerRef: musicPlayer
     property var gearClientRef: gearClient
+    property var otaClientRef: (typeof otaStatusClient !== "undefined" ? otaStatusClient : null)
     property color ambientColor: "#8b5cf6"
     property real ambientBrightness: 0.6   // 0.0 ~ 1.0
     property string currentGear: "P"
@@ -615,6 +616,7 @@ ApplicationWindow {
             onOpenClimate: stackView.push(climateScreen)
             onOpenBluetooth: stackView.push(bluetoothScreen)
             onOpenNavigation: stackView.push(navigationScreen)
+            onOpenOta: stackView.push(otaStatusScreen)
 
             onGearChanged: function(gear) {
                 if (!rootWindow.gearClientRef)
@@ -665,6 +667,14 @@ ApplicationWindow {
     Component {
         id: navigationScreen
         NavigationScreen {
+            onBackClicked: stackView.pop()
+        }
+    }
+
+    Component {
+        id: otaStatusScreen
+        OtaStatusScreen {
+            otaClient: rootWindow.otaClientRef
             onBackClicked: stackView.pop()
         }
     }

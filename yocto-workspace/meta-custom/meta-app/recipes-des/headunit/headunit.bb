@@ -20,7 +20,6 @@ DEPENDS = "\
     qtdeclarative-native \
     qtmultimedia \
     qtwayland \
-    qtwayland-native \
     qtshadertools-native \
     qtconnectivity \
     qtlocation \

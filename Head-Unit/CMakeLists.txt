@@ -42,6 +42,7 @@ set(HEADUNIT_SOURCES
     src/backend/music/music_player.cpp
     src/backend/gear/gear_client.cpp
     src/backend/weather/weather_service.cpp
+    src/backend/ota/ota_status_client.cpp
     src/backend/bluetooth/bluetooth_manager.cpp
     src/backend/bluetooth/bluetooth_audio_player.cpp
     src/backend/bluetooth/bluetooth_agent.cpp
@@ -54,6 +55,7 @@ set(HEADUNIT_HEADERS
     src/backend/music/music_player.h
     src/backend/gear/gear_client.h
     src/backend/weather/weather_service.h
+    src/backend/ota/ota_status_client.h
     src/backend/bluetooth/bluetooth_manager.h
     src/backend/bluetooth/bluetooth_audio_player.h
     src/backend/bluetooth/bluetooth_agent.h
@@ -79,6 +81,7 @@ qt_add_qml_module(HeadUnitApp
         ui/pages/ClimateScreen.qml
         ui/pages/BluetoothScreen.qml
         ui/pages/NavigationScreen.qml
+        ui/pages/OtaStatusScreen.qml
     SOURCES
         ${HEADUNIT_SOURCES}
         ${HEADUNIT_HEADERS}

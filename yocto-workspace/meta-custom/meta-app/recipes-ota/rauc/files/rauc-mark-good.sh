@@ -14,9 +14,18 @@ LOG_TAG="rauc-mark-good"
 HEALTH_TIMEOUT_SEC="${RAUC_HEALTH_TIMEOUT_SEC:-90}"
 STABLE_REQUIRED_SEC="${RAUC_STABLE_REQUIRED_SEC:-12}"
 MAX_HEADUNIT_RESTARTS="${RAUC_MAX_HEADUNIT_RESTARTS:-6}"
+# Test mode default: disable rollback on health timeout.
+TIMEOUT_ROLLBACK_ENABLED="${RAUC_TIMEOUT_ROLLBACK_ENABLED:-0}"
 POLL_SEC=2
 
 log() { echo "${LOG_TAG}: $*"; logger -t "${LOG_TAG}" "$*" 2>/dev/null || true; }
+
+is_true() {
+    case "${1:-}" in
+        1|y|Y|yes|YES|true|TRUE|on|ON) return 0 ;;
+        *) return 1 ;;
+    esac
+}
 
 read_restarts() {
     v="$(systemctl show headunit.service -p NRestarts --value 2>/dev/null || echo 0)"
@@ -107,7 +116,12 @@ while :; do
     fi
 
     if [ "${elapsed}" -ge "${HEALTH_TIMEOUT_SEC}" ]; then
-        rollback_and_reboot "health-check timeout (${HEALTH_TIMEOUT_SEC}s) without stable UI"
+        if is_true "${TIMEOUT_ROLLBACK_ENABLED}"; then
+            rollback_and_reboot "health-check timeout (${HEALTH_TIMEOUT_SEC}s) without stable UI"
+        else
+            log "health-check timeout reached (${HEALTH_TIMEOUT_SEC}s), but timeout rollback is disabled; continue waiting"
+            start_ts="${now_ts}"
+        fi
     fi
 
     sleep "${POLL_SEC}"

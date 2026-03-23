@@ -12,6 +12,7 @@ Item {
     signal openClimate()
     signal openBluetooth()
     signal openNavigation()
+    signal openOta()
     signal gearChanged(string gear)
 
     property var musicPlayer
@@ -136,6 +137,37 @@ Item {
             }
 
             Item { Layout.fillWidth: true }
+
+            Button {
+                id: otaEntryButton
+                text: qsTr("OTA")
+                implicitWidth: 84
+                implicitHeight: 36
+
+                onClicked: homeScreen.openOta()
+
+                background: Rectangle {
+                    radius: 18
+                    color: otaEntryButton.pressed
+                           ? "#1e3a8a"
+                           : (otaEntryButton.hovered ? "#1d4ed8" : "#1e40af")
+                    border.color: "#93c5fd"
+                    border.width: 1
+
+                    Behavior on color {
+                        ColorAnimation { duration: 140 }
+                    }
+                }
+
+                contentItem: Text {
+                    text: otaEntryButton.text
+                    color: "#eff6ff"
+                    font.pixelSize: 13
+                    font.bold: true
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
+            }
 
             GearSelector {
                 width: 200

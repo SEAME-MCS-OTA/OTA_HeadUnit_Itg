@@ -1,5 +1,5 @@
 {
-  "device_id": "vw-ivi-0026",
+  "device_id": "fer-jj90",
   "device_model": "raspberrypi4",
   "device_hw_rev": "1.2",
   "device_serial": "",
@@ -20,7 +20,7 @@
   "screenshot_path": "",
   "log_bundle_path": "",
   "mqtt_enabled": true,
-  "mqtt_broker_host": "192.168.86.33",
+  "mqtt_broker_host": "192.168.86.44",
   "mqtt_broker_port": 1883,
   "mqtt_keepalive_sec": 60,
   "mqtt_qos": 1,
