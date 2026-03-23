@@ -144,10 +144,10 @@ QStringList toStringList(const QJsonValue& value) {
 }
 
 QVariantList toSlotList(const QJsonValue& value) {
-    QVariantList slots;
+    QVariantList slotItems;
     if (value.isObject()) {
         const QJsonObject slotObject = value.toObject();
-        slots.reserve(slotObject.size());
+        slotItems.reserve(slotObject.size());
 
         for (auto it = slotObject.constBegin(); it != slotObject.constEnd(); ++it) {
             if (!it.value().isObject()) {
@@ -158,23 +158,23 @@ QVariantList toSlotList(const QJsonValue& value) {
                 || slotMap.value(QStringLiteral("name")).toString().trimmed().isEmpty()) {
                 slotMap.insert(QStringLiteral("name"), it.key());
             }
-            slots.push_back(slotMap);
+            slotItems.push_back(slotMap);
         }
-        return slots;
+        return slotItems;
     }
 
     if (!value.isArray()) {
-        return slots;
+        return slotItems;
     }
 
     const QJsonArray arr = value.toArray();
-    slots.reserve(arr.size());
+    slotItems.reserve(arr.size());
     for (const QJsonValue& entry : arr) {
         if (entry.isObject()) {
-            slots.push_back(entry.toObject().toVariantMap());
+            slotItems.push_back(entry.toObject().toVariantMap());
         }
     }
-    return slots;
+    return slotItems;
 }
 
 template <typename T>
