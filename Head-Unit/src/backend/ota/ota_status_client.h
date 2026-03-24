@@ -30,6 +30,10 @@ class OtaStatusClient : public QObject {
     Q_PROPERTY(QString currentSlot READ currentSlot NOTIFY currentSlotChanged)
     Q_PROPERTY(QString currentVersion READ currentVersion NOTIFY currentVersionChanged)
     Q_PROPERTY(QString targetVersion READ targetVersion NOTIFY targetVersionChanged)
+    Q_PROPERTY(bool updateAvailable READ updateAvailable NOTIFY updateAvailableChanged)
+    Q_PROPERTY(QString availableReleaseId READ availableReleaseId NOTIFY availableReleaseIdChanged)
+    Q_PROPERTY(QString availableVersion READ availableVersion NOTIFY availableVersionChanged)
+    Q_PROPERTY(QDateTime availableAnnounceTs READ availableAnnounceTs NOTIFY availableAnnounceTsChanged)
     Q_PROPERTY(QString otaId READ otaId NOTIFY otaIdChanged)
     Q_PROPERTY(QString ipAddress READ ipAddress NOTIFY ipAddressChanged)
     Q_PROPERTY(QString ipSource READ ipSource NOTIFY ipSourceChanged)
@@ -97,6 +101,10 @@ public:
     QString currentSlot() const;
     QString currentVersion() const;
     QString targetVersion() const;
+    bool updateAvailable() const;
+    QString availableReleaseId() const;
+    QString availableVersion() const;
+    QDateTime availableAnnounceTs() const;
     QString otaId() const;
     QString ipAddress() const;
     QString ipSource() const;
@@ -112,6 +120,7 @@ public:
     Q_INVOKABLE void startPolling();
     Q_INVOKABLE void stopPolling();
     Q_INVOKABLE void refreshNow();
+    Q_INVOKABLE void requestUpdate();
 
 signals:
     void baseUrlChanged();
@@ -130,6 +139,10 @@ signals:
     void currentSlotChanged();
     void currentVersionChanged();
     void targetVersionChanged();
+    void updateAvailableChanged();
+    void availableReleaseIdChanged();
+    void availableVersionChanged();
+    void availableAnnounceTsChanged();
     void otaIdChanged();
     void ipAddressChanged();
     void ipSourceChanged();
@@ -147,6 +160,12 @@ private slots:
     void onRequestFinished();
 
 private:
+    enum class RequestKind {
+        None = 0,
+        StatusPoll,
+        UpdateRequest,
+    };
+
     static QString normalizeBaseUrl(const QString& baseUrl);
     static Phase phaseFromString(const QString& phaseText);
     static Event eventFromString(const QString& eventText);
@@ -154,7 +173,8 @@ private:
 
     void scheduleNextPoll(int delayMs);
     void fetchStatusInternal();
-    void handleFailure(const QString& errorText);
+    void handleStatusFailure(const QString& errorText);
+    void handleUpdateRequestFailure(const QString& errorText);
     void updateFromPayload(const QJsonObject& payload);
 
     bool setOnline(bool online);
@@ -163,11 +183,12 @@ private:
 
     QNetworkAccessManager* networkManager_ = nullptr;
     QPointer<QNetworkReply> pendingReply_;
+    RequestKind pendingRequestKind_ = RequestKind::None;
     QTimer* pollTimer_ = nullptr;
     QTimer* requestTimeoutTimer_ = nullptr;
 
     QString baseUrl_ = QStringLiteral("http://127.0.0.1:8080");
-    int pollIntervalMs_ = 3000;
+    int pollIntervalMs_ = 60000;
     int timeoutMs_ = 2500;
 
     bool polling_ = false;
@@ -185,6 +206,10 @@ private:
     QString currentSlot_;
     QString currentVersion_;
     QString targetVersion_;
+    bool updateAvailable_ = false;
+    QString availableReleaseId_;
+    QString availableVersion_;
+    QDateTime availableAnnounceTs_;
     QString otaId_;
     QString ipAddress_;
     QString ipSource_;

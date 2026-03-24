@@ -686,11 +686,8 @@ class MQTTCommandBridge:
             self.publish_status("failed", req["target_version"], f"Command rejected: {reason}")
 
     def _handle_release_announce(self, data: Dict[str, Any]) -> None:
-        if not self.register_on_announce:
-            return
-
         release_id = str(data.get("release_id") or data.get("ota_id") or "").strip()
-        version = str(data.get("version") or "").strip()
+        version = str(data.get("version") or data.get("target_version") or "").strip()
         if not release_id and version:
             release_id = f"version:{version}"
         if not release_id:
@@ -701,6 +698,17 @@ class MQTTCommandBridge:
             return
         self._last_announce_key = release_id
         self._last_announce_at = now
+
+        state.update_available = True
+        state.available_release_id = release_id
+        state.available_version = version or None
+        state.available_announce_ts = datetime.now().astimezone().isoformat(timespec="seconds")
+        _append_runtime_log(
+            f"mqtt announce received release={release_id} version={version or '-'}"
+        )
+
+        if not self.register_on_announce:
+            return
 
         ok = self.publish_register("release_announce", release_id=release_id, version=version)
         if ok:
@@ -887,6 +895,10 @@ def ota_status():
         "ip_source": ip_source,
         "slot_source": slot_source,
         "device_id": CFG.get("device_id"),
+        "update_available": bool(state.update_available),
+        "available_release_id": state.available_release_id,
+        "available_version": state.available_version,
+        "available_announce_ts": state.available_announce_ts,
     })
 
 @app.post("/ota/start")
@@ -914,6 +926,46 @@ def ota_start():
     if not ok:
         return jsonify({"detail": reason}), 409
     return jsonify({"ok": True})
+
+
+@app.post("/ota/request-update")
+def ota_request_update():
+    req = request.get_json(silent=True) or {}
+    release_id = str(
+        req.get("release_id")
+        or req.get("ota_id")
+        or state.available_release_id
+        or ""
+    ).strip()
+    version = str(
+        req.get("version")
+        or req.get("target_version")
+        or state.available_version
+        or ""
+    ).strip()
+
+    if not MQTT_BRIDGE or not MQTT_BRIDGE.enabled:
+        return jsonify({"detail": "mqtt bridge is disabled"}), 503
+    if not MQTT_BRIDGE.is_connected():
+        return jsonify({"detail": "mqtt broker is not connected"}), 503
+
+    ok = MQTT_BRIDGE.publish_register(
+        "ui_update_request",
+        release_id=release_id,
+        version=version,
+    )
+    if not ok:
+        return jsonify({"detail": "failed to publish update request"}), 503
+
+    _append_runtime_log(
+        f"api request-update published release={release_id or '-'} version={version or '-'}"
+    )
+    return jsonify({
+        "ok": True,
+        "trigger": "ui_update_request",
+        "release_id": release_id,
+        "version": version,
+    })
 
 
 def _publish_mqtt_status(status: str, target_version: str, message: str = "") -> None:

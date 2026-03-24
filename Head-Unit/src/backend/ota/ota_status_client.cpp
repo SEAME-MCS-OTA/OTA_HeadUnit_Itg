@@ -14,7 +14,7 @@
 
 namespace {
 constexpr int kMinPollIntervalMs = 3000;
-constexpr int kMaxPollIntervalMs = 5000;
+constexpr int kMaxPollIntervalMs = 60000;
 
 constexpr int kMinTimeoutMs = 1000;
 constexpr int kMaxTimeoutMs = 15000;
@@ -49,6 +49,33 @@ QString toStringOrEmpty(const QJsonValue& value) {
         return jsonValueToCompactString(value);
     }
     return QString();
+}
+
+bool toBoolOrDefault(const QJsonValue& value, bool fallback = false) {
+    if (value.isBool()) {
+        return value.toBool();
+    }
+    if (value.isDouble()) {
+        return !qFuzzyIsNull(value.toDouble());
+    }
+    if (value.isString()) {
+        const QString normalized = value.toString().trimmed().toLower();
+        if (normalized == QStringLiteral("1")
+            || normalized == QStringLiteral("true")
+            || normalized == QStringLiteral("yes")
+            || normalized == QStringLiteral("y")
+            || normalized == QStringLiteral("on")) {
+            return true;
+        }
+        if (normalized == QStringLiteral("0")
+            || normalized == QStringLiteral("false")
+            || normalized == QStringLiteral("no")
+            || normalized == QStringLiteral("n")
+            || normalized == QStringLiteral("off")) {
+            return false;
+        }
+    }
+    return fallback;
 }
 
 QJsonValue valueAtPath(const QJsonObject& root, const QString& dottedPath) {
@@ -295,6 +322,22 @@ QString OtaStatusClient::targetVersion() const {
     return targetVersion_;
 }
 
+bool OtaStatusClient::updateAvailable() const {
+    return updateAvailable_;
+}
+
+QString OtaStatusClient::availableReleaseId() const {
+    return availableReleaseId_;
+}
+
+QString OtaStatusClient::availableVersion() const {
+    return availableVersion_;
+}
+
+QDateTime OtaStatusClient::availableAnnounceTs() const {
+    return availableAnnounceTs_;
+}
+
 QString OtaStatusClient::otaId() const {
     return otaId_;
 }
@@ -383,6 +426,8 @@ void OtaStatusClient::stopPolling() {
         pendingReply_->abort();
         pendingReply_.clear();
     }
+    pendingRequestKind_ = RequestKind::None;
+    requestTimedOut_ = false;
 
     if (requestInFlight_) {
         requestInFlight_ = false;
@@ -407,7 +452,52 @@ void OtaStatusClient::refreshNow() {
     fetchStatusInternal();
 }
 
+void OtaStatusClient::requestUpdate() {
+    if (requestInFlight_ || !networkManager_) {
+        return;
+    }
+
+    if (pollTimer_) {
+        // Avoid losing periodic polling when update request overlaps with poll timeout.
+        pollTimer_->stop();
+    }
+
+    const QUrl endpoint(normalizeBaseUrl(baseUrl_) + QStringLiteral("/ota/request-update"));
+    QNetworkRequest request(endpoint);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
+
+    QJsonObject body;
+    if (!availableReleaseId_.isEmpty()) {
+        body.insert(QStringLiteral("release_id"), availableReleaseId_);
+    }
+    if (!availableVersion_.isEmpty()) {
+        body.insert(QStringLiteral("version"), availableVersion_);
+    }
+    if (!deviceId_.isEmpty()) {
+        body.insert(QStringLiteral("device_id"), deviceId_);
+    }
+    if (!ipAddress_.isEmpty() && ipAddress_ != QStringLiteral("-")) {
+        body.insert(QStringLiteral("ip"), ipAddress_);
+    }
+
+    pendingReply_ = networkManager_->post(request, QJsonDocument(body).toJson(QJsonDocument::Compact));
+    pendingRequestKind_ = RequestKind::UpdateRequest;
+    requestTimedOut_ = false;
+
+    requestInFlight_ = true;
+    emit requestInFlightChanged();
+
+    connect(pendingReply_, &QNetworkReply::finished, this, &OtaStatusClient::onRequestFinished);
+    if (requestTimeoutTimer_) {
+        requestTimeoutTimer_->start(timeoutMs_);
+    }
+}
+
 void OtaStatusClient::onPollTimerTimeout() {
+    if (requestInFlight_) {
+        scheduleNextPoll(500);
+        return;
+    }
     fetchStatusInternal();
 }
 
@@ -426,6 +516,8 @@ void OtaStatusClient::onRequestFinished() {
         return;
     }
 
+    const RequestKind finishedRequestKind = pendingRequestKind_;
+    pendingRequestKind_ = RequestKind::None;
     pendingReply_.clear();
 
     if (requestTimeoutTimer_) {
@@ -446,7 +538,14 @@ void OtaStatusClient::onRequestFinished() {
             : reply->errorString();
 
         reply->deleteLater();
-        handleFailure(errorText);
+        if (finishedRequestKind == RequestKind::UpdateRequest) {
+            handleUpdateRequestFailure(errorText);
+            if (polling_) {
+                scheduleNextPoll(0);
+            }
+        } else {
+            handleStatusFailure(errorText);
+        }
         return;
     }
 
@@ -455,8 +554,41 @@ void OtaStatusClient::onRequestFinished() {
 
     QJsonParseError parseError{};
     const QJsonDocument doc = QJsonDocument::fromJson(response, &parseError);
+
+    if (finishedRequestKind == RequestKind::UpdateRequest) {
+        if (parseError.error == QJsonParseError::NoError && doc.isObject()) {
+            const QJsonObject payload = doc.object();
+            const QJsonValue okValue = payload.value(QStringLiteral("ok"));
+            const bool ok = okValue.isUndefined() ? true : toBoolOrDefault(okValue, false);
+            if (!ok) {
+                QString errorText = firstNonEmptyString(payload, {"detail", "message"});
+                if (errorText.isEmpty()) {
+                    errorText = tr("Update request rejected");
+                }
+                handleUpdateRequestFailure(errorText);
+                if (polling_) {
+                    scheduleNextPoll(0);
+                }
+                return;
+            }
+        } else if (!response.trimmed().isEmpty()) {
+            handleUpdateRequestFailure(tr("Invalid JSON payload from /ota/request-update"));
+            if (polling_) {
+                scheduleNextPoll(0);
+            }
+            return;
+        }
+
+        setRequestError(QString());
+        emit statusUpdated();
+        if (polling_) {
+            scheduleNextPoll(0);
+        }
+        return;
+    }
+
     if (parseError.error != QJsonParseError::NoError || !doc.isObject()) {
-        handleFailure(tr("Invalid JSON payload from /ota/status"));
+        handleStatusFailure(tr("Invalid JSON payload from /ota/status"));
         return;
     }
 
@@ -464,7 +596,6 @@ void OtaStatusClient::onRequestFinished() {
     setOnline(true);
     setRetryCount(0);
     setRequestError(QString());
-
     emit statusUpdated();
     scheduleNextPoll(pollIntervalMs_);
 }
@@ -571,6 +702,7 @@ void OtaStatusClient::fetchStatusInternal() {
     request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
 
     pendingReply_ = networkManager_->get(request);
+    pendingRequestKind_ = RequestKind::StatusPoll;
     requestTimedOut_ = false;
 
     requestInFlight_ = true;
@@ -582,7 +714,7 @@ void OtaStatusClient::fetchStatusInternal() {
     }
 }
 
-void OtaStatusClient::handleFailure(const QString& errorText) {
+void OtaStatusClient::handleStatusFailure(const QString& errorText) {
     setOnline(false);
     setRequestError(errorText);
 
@@ -593,6 +725,11 @@ void OtaStatusClient::handleFailure(const QString& errorText) {
 
     const int retryDelayMs = qMin(kRetryBaseDelayMs * qMax(1, retryCount_), pollIntervalMs_);
     scheduleNextPoll(retryDelayMs);
+}
+
+void OtaStatusClient::handleUpdateRequestFailure(const QString& errorText) {
+    setRequestError(errorText);
+    emit requestFailed(errorText);
 }
 
 void OtaStatusClient::updateFromPayload(const QJsonObject& payload) {
@@ -634,6 +771,33 @@ void OtaStatusClient::updateFromPayload(const QJsonObject& payload) {
         {"target_version", "ota.target_version"});
     if (assignIfChanged(targetVersion_, nextTargetVersion)) {
         emit targetVersionChanged();
+    }
+
+    const bool nextUpdateAvailable = toBoolOrDefault(
+        firstExistingValue(payload, {"update_available", "ota.update_available"}),
+        false);
+    if (assignIfChanged(updateAvailable_, nextUpdateAvailable)) {
+        emit updateAvailableChanged();
+    }
+
+    const QString nextAvailableReleaseId = firstNonEmptyString(
+        payload,
+        {"available_release_id", "ota.available_release_id"});
+    if (assignIfChanged(availableReleaseId_, nextAvailableReleaseId)) {
+        emit availableReleaseIdChanged();
+    }
+
+    const QString nextAvailableVersion = firstNonEmptyString(
+        payload,
+        {"available_version", "ota.available_version"});
+    if (assignIfChanged(availableVersion_, nextAvailableVersion)) {
+        emit availableVersionChanged();
+    }
+
+    const QDateTime nextAvailableAnnounceTs = parseTimestamp(
+        firstNonEmptyString(payload, {"available_announce_ts", "ota.available_announce_ts"}));
+    if (assignIfChanged(availableAnnounceTs_, nextAvailableAnnounceTs)) {
+        emit availableAnnounceTsChanged();
     }
 
     const QString nextOtaId = firstNonEmptyString(payload, {"ota_id", "ota.ota_id"});

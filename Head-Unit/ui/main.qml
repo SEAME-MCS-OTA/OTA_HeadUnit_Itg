@@ -607,6 +607,7 @@ ApplicationWindow {
         HomeScreen {
             musicPlayer: rootWindow.playerRef
             gearClient: rootWindow.gearClientRef
+            otaClient: rootWindow.otaClientRef
             driveMode: viewModel ? viewModel.driveMode : "PARK"
             ambientColor: rootWindow.ambientColor
             ambientBrightness: rootWindow.ambientBrightness

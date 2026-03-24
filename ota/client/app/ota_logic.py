@@ -32,6 +32,10 @@ class OtaState:
         self.last_error = None
         self.active_ota_id = None
         self.ota_log: List[str] = []
+        self.update_available = False
+        self.available_release_id = None
+        self.available_version = None
+        self.available_announce_ts = None
 
 state = OtaState()
 

@@ -16,6 +16,7 @@ Item {
     readonly property string currentSlot: otaClient ? String(otaClient.currentSlot || "-").toUpperCase() : "-"
     readonly property string currentVersion: otaClient ? String(otaClient.currentVersion || "-") : "-"
     readonly property string targetVersion: otaClient ? String(otaClient.targetVersion || "-") : "-"
+    readonly property bool updateAvailable: otaClient ? !!otaClient.updateAvailable : false
     readonly property string backendError: otaClient ? String(otaClient.backendError || "") : ""
     readonly property string requestError: otaClient ? String(otaClient.requestError || "") : ""
     readonly property bool online: otaClient ? !!otaClient.online : false
@@ -205,14 +206,26 @@ Item {
 
                 Button {
                     id: refreshButton
-                    text: requestInFlight ? qsTr("Refreshing...") : qsTr("Refresh")
-                    enabled: otaClient && otaClient.refreshNow && !requestInFlight
+                    text: requestInFlight
+                          ? (updateAvailable ? qsTr("Requesting...") : qsTr("Refreshing..."))
+                          : (updateAvailable ? qsTr("Update") : qsTr("Refresh"))
+                    enabled: otaClient
+                             && !requestInFlight
+                             && ((updateAvailable && otaClient.requestUpdate)
+                                 || (!updateAvailable && otaClient.refreshNow))
                     implicitWidth: 112
                     implicitHeight: 32
 
                     onClicked: {
-                        if (otaClient && otaClient.refreshNow)
+                        if (!otaClient)
+                            return;
+
+                        if (updateAvailable) {
+                            if (otaClient.requestUpdate)
+                                otaClient.requestUpdate();
+                        } else if (otaClient.refreshNow) {
                             otaClient.refreshNow();
+                        }
                     }
 
                     background: Rectangle {

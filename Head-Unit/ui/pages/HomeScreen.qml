@@ -17,6 +17,7 @@ Item {
 
     property var musicPlayer
     property var gearClient: null
+    property var otaClient: null
     property string driveMode: "PARK"
     property color ambientColor: "#8b5cf6"
     property real ambientBrightness: 0.6
@@ -30,6 +31,7 @@ Item {
 
     property string currentTrack: musicPlayer && musicPlayer.currentTrack ? musicPlayer.currentTrack : ""
     property bool isPlaying: musicPlayer && musicPlayer.playing
+    readonly property bool otaUpdateAvailable: otaClient ? !!otaClient.updateAvailable : false
 
     readonly property string currentTrackTitle: isPlaying && currentTrack ? formatTrackTitle(currentTrack) : qsTr("Tap to play music")
     readonly property string currentTrackArtist: isPlaying && currentTrack ? formatTrackArtist(currentTrack) : qsTr("No track playing")
@@ -148,10 +150,10 @@ Item {
 
                 background: Rectangle {
                     radius: 18
-                    color: otaEntryButton.pressed
-                           ? "#1e3a8a"
-                           : (otaEntryButton.hovered ? "#1d4ed8" : "#1e40af")
-                    border.color: "#93c5fd"
+                    color: otaUpdateAvailable
+                           ? (otaEntryButton.pressed ? "#3b82f6" : (otaEntryButton.hovered ? "#60a5fa" : "#93c5fd"))
+                           : (otaEntryButton.pressed ? "#111827" : (otaEntryButton.hovered ? "#252525" : "#1a1a1a"))
+                    border.color: otaUpdateAvailable ? "#bfdbfe" : "#333333"
                     border.width: 1
 
                     Behavior on color {
@@ -161,7 +163,7 @@ Item {
 
                 contentItem: Text {
                     text: otaEntryButton.text
-                    color: "#eff6ff"
+                    color: otaUpdateAvailable ? "#eff6ff" : "#e5e7eb"
                     font.pixelSize: 13
                     font.bold: true
                     horizontalAlignment: Text.AlignHCenter
