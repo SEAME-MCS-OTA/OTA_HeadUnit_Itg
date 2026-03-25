@@ -6,6 +6,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QDBusConnection>
 #include <QTimer>
 #include <QUrl>
 #include <QVariantMap>
@@ -21,6 +22,10 @@ constexpr int kMaxTimeoutMs = 15000;
 
 constexpr int kMaxRetryAttempts = 3;
 constexpr int kRetryBaseDelayMs = 1000;
+
+const QString kOtaDbusPath = QStringLiteral("/com/des/ota/Status");
+const QString kOtaDbusInterface = QStringLiteral("com.des.ota.Status1");
+const QString kOtaDbusSignalUpdateAvailability = QStringLiteral("UpdateAvailabilityChanged");
 
 QString jsonValueToCompactString(const QJsonValue& value) {
     if (value.isNull() || value.isUndefined()) {
@@ -225,6 +230,14 @@ OtaStatusClient::OtaStatusClient(QObject* parent)
 
     requestTimeoutTimer_->setSingleShot(true);
     connect(requestTimeoutTimer_, &QTimer::timeout, this, &OtaStatusClient::onRequestTimeout);
+
+    QDBusConnection::systemBus().connect(
+        QString(),
+        kOtaDbusPath,
+        kOtaDbusInterface,
+        kOtaDbusSignalUpdateAvailability,
+        this,
+        SLOT(onUpdateAvailabilityChanged(bool,QString,QString,QString)));
 }
 
 OtaStatusClient::~OtaStatusClient() {
@@ -598,6 +611,45 @@ void OtaStatusClient::onRequestFinished() {
     setRequestError(QString());
     emit statusUpdated();
     scheduleNextPoll(pollIntervalMs_);
+}
+
+void OtaStatusClient::onUpdateAvailabilityChanged(
+    bool updateAvailable,
+    const QString& releaseId,
+    const QString& version,
+    const QString& announceTs) {
+    const QString nextReleaseId = releaseId.trimmed();
+    const QString nextVersion = version.trimmed();
+    const QString nextAnnounceText = announceTs.trimmed();
+
+    if (assignIfChanged(updateAvailable_, updateAvailable)) {
+        emit updateAvailableChanged();
+    }
+    if (assignIfChanged(availableReleaseId_, nextReleaseId)) {
+        emit availableReleaseIdChanged();
+    }
+    if (assignIfChanged(availableVersion_, nextVersion)) {
+        emit availableVersionChanged();
+    }
+
+    QDateTime nextAnnounceTs;
+    if (!nextAnnounceText.isEmpty()) {
+        nextAnnounceTs = parseTimestamp(nextAnnounceText);
+    }
+    if (updateAvailable && !nextAnnounceTs.isValid()) {
+        nextAnnounceTs = QDateTime::currentDateTime();
+    }
+    if (assignIfChanged(availableAnnounceTs_, nextAnnounceTs)) {
+        emit availableAnnounceTsChanged();
+    }
+
+    const QDateTime now = QDateTime::currentDateTime();
+    if (assignIfChanged(lastUpdated_, now)) {
+        emit lastUpdatedChanged();
+    }
+
+    setOnline(true);
+    emit statusUpdated();
 }
 
 QString OtaStatusClient::normalizeBaseUrl(const QString& baseUrl) {

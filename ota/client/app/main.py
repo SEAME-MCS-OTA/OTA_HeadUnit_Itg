@@ -8,6 +8,7 @@ import struct
 import subprocess
 import re
 import glob
+import shutil
 from datetime import datetime
 from typing import Dict, Any, Optional, Callable, Tuple
 from urllib.parse import urlparse
@@ -56,6 +57,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+DBUS_OTA_PATH = os.environ.get("OTA_DBUS_PATH", "/com/des/ota/Status")
+DBUS_OTA_INTERFACE = os.environ.get("OTA_DBUS_INTERFACE", "com.des.ota.Status1")
+DBUS_OTA_SIGNAL = os.environ.get("OTA_DBUS_SIGNAL", "UpdateAvailabilityChanged")
+
 
 def _append_runtime_log(line: str) -> None:
     try:
@@ -65,6 +70,76 @@ def _append_runtime_log(line: str) -> None:
             f.write(f"{ts} {line}\n")
     except Exception:
         pass
+
+
+def _emit_update_available_signal(
+    available: bool,
+    release_id: str = "",
+    version: str = "",
+    announce_ts: str = "",
+) -> None:
+    ts = str(announce_ts or "").strip() or datetime.now().astimezone().isoformat(timespec="seconds")
+    rel = str(release_id or "").strip()
+    ver = str(version or "").strip()
+
+    commands = []
+    busctl = shutil.which("busctl")
+    if busctl:
+        commands.append(
+            [
+                busctl,
+                "--system",
+                "emit",
+                DBUS_OTA_PATH,
+                DBUS_OTA_INTERFACE,
+                DBUS_OTA_SIGNAL,
+                "bsss",
+                "true" if available else "false",
+                rel,
+                ver,
+                ts,
+            ]
+        )
+
+    dbus_send = shutil.which("dbus-send")
+    if dbus_send:
+        commands.append(
+            [
+                dbus_send,
+                "--system",
+                "--type=signal",
+                DBUS_OTA_PATH,
+                f"{DBUS_OTA_INTERFACE}.{DBUS_OTA_SIGNAL}",
+                f"boolean:{'true' if available else 'false'}",
+                f"string:{rel}",
+                f"string:{ver}",
+                f"string:{ts}",
+            ]
+        )
+
+    if not commands:
+        _append_runtime_log("dbus emit skipped: no busctl/dbus-send")
+        return
+
+    for cmd in commands:
+        try:
+            subprocess.run(
+                cmd,
+                check=True,
+                timeout=1.0,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            _append_runtime_log(
+                f"dbus signal emitted iface={DBUS_OTA_INTERFACE} signal={DBUS_OTA_SIGNAL} available={available}"
+            )
+            return
+        except Exception:
+            continue
+
+    _append_runtime_log(
+        f"dbus signal emit failed iface={DBUS_OTA_INTERFACE} signal={DBUS_OTA_SIGNAL}"
+    )
 
 
 @app.before_request
@@ -306,6 +381,47 @@ def _infer_current_slot() -> tuple[Optional[str], str]:
 def _is_unknown_version(raw: Any) -> bool:
     s = str(raw or "").strip().lower()
     return s in ("", "-", "unknown", "none", "n/a")
+
+
+def _os_release_value(raw: str) -> str:
+    value = str(raw or "").strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+        return value[1:-1]
+    return value
+
+
+def _infer_current_version_from_system() -> Optional[str]:
+    # Allow explicit overrides from environment/config first.
+    for candidate in (
+        os.environ.get("OTA_CURRENT_VERSION"),
+        CFG.get("current_version"),
+        CFG.get("version"),
+    ):
+        value = str(candidate or "").strip()
+        if not _is_unknown_version(value):
+            return value
+
+    for path in ("/etc/os-release", "/usr/lib/os-release"):
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                lines = f.read().splitlines()
+        except Exception:
+            continue
+
+        parsed: Dict[str, str] = {}
+        for line in lines:
+            text = str(line or "").strip()
+            if not text or text.startswith("#") or "=" not in text:
+                continue
+            key, value = text.split("=", 1)
+            parsed[key.strip()] = _os_release_value(value)
+
+        for key in ("OTA_CURRENT_VERSION", "IMAGE_VERSION", "VERSION_ID", "VERSION"):
+            value = str(parsed.get(key) or "").strip()
+            if not _is_unknown_version(value):
+                return value
+
+    return None
 
 
 def _infer_current_version_from_ota_logs(log_root: str) -> Optional[str]:
@@ -703,6 +819,12 @@ class MQTTCommandBridge:
         state.available_release_id = release_id
         state.available_version = version or None
         state.available_announce_ts = datetime.now().astimezone().isoformat(timespec="seconds")
+        _emit_update_available_signal(
+            available=True,
+            release_id=release_id,
+            version=version,
+            announce_ts=state.available_announce_ts or "",
+        )
         _append_runtime_log(
             f"mqtt announce received release={release_id} version={version or '-'}"
         )
@@ -820,6 +942,23 @@ _stop_event = threading.Event()
 start_queue_flusher(CFG, _stop_event)
 _mqtt_heartbeat_started = False
 
+
+def _initialize_current_version() -> None:
+    if not _is_unknown_version(state.current_version):
+        return
+
+    inferred = _infer_current_version_from_system()
+    if inferred and not _is_unknown_version(inferred):
+        state.current_version = inferred
+        _append_runtime_log(f"version init source=system value={inferred}")
+        return
+
+    inferred = _infer_current_version_from_ota_logs(CFG.get("ota_log_dir", "/data/log/ota"))
+    if inferred and not _is_unknown_version(inferred):
+        state.current_version = inferred
+        _append_runtime_log(f"version init source=ota_log value={inferred}")
+
+
 @app.get("/health")
 def health():
     return jsonify({
@@ -871,6 +1010,11 @@ def ota_status():
         ]
 
     current_version = state.current_version
+    if _is_unknown_version(current_version):
+        inferred_version = _infer_current_version_from_system()
+        if inferred_version and not _is_unknown_version(inferred_version):
+            current_version = inferred_version
+            state.current_version = inferred_version
     if _is_unknown_version(current_version):
         inferred_version = _infer_current_version_from_ota_logs(CFG.get("ota_log_dir", "/data/log/ota"))
         if inferred_version and not _is_unknown_version(inferred_version):
@@ -1326,6 +1470,7 @@ def _start_mqtt_heartbeat() -> None:
 
 
 def main():
+    _initialize_current_version()
     _init_mqtt_bridge()
     _start_mqtt_heartbeat()
     app.run(host="0.0.0.0", port=8080)

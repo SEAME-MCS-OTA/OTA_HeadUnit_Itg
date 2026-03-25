@@ -158,6 +158,7 @@ private slots:
     void onPollTimerTimeout();
     void onRequestTimeout();
     void onRequestFinished();
+    void onUpdateAvailabilityChanged(bool updateAvailable, const QString& releaseId, const QString& version, const QString& announceTs);
 
 private:
     enum class RequestKind {
