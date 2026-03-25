@@ -25,7 +25,7 @@
 ### B. 관리자 기능 (포함)
 
 - OTA 시작 트리거 (`/ota/start`)
-- 디바이스 재부팅 (`/ota/reboot`)
+- 업데이트 요청 신호 발행 (`/ota/request-update`)
 - 업로드 기능(외부 OTA 서버 firmware upload)은 같은 화면의 "Admin Mode"로 포함
   - 단, 로컬 `ota-backend` API에는 업로드 엔드포인트가 없으므로 외부 OTA 서버 API를 별도 호출해야 함
   - 최소 요구 API: `/api/v1/admin/firmware`, `/api/v1/firmware`
@@ -46,7 +46,8 @@
 - `GET /ota/status`
 - `POST /ota/start`
   - request: `{"ota_id":"...", "url":"...", "target_version":"..."}`
-- `POST /ota/reboot`
+- `POST /ota/request-update`
+  - request: `{"release_id":"...", "version":"..."}`
 
 `GET /ota/status` expected fields:
 

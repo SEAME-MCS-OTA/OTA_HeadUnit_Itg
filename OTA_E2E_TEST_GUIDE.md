@@ -61,14 +61,27 @@ cd /home/jeongmin/OTA_HeadUnit_Itg
 ./ota/tools/build-image.sh
 ```
 
+코드 변경이 반영되지 않는 경우(캐시 재사용):
+
+```bash
+FORCE_REBUILD=1 ./ota/tools/build-image.sh
+```
+
 ### 3-2. (필수) RAUC 번들 빌드
 
 ```bash
 ./ota/tools/build-rauc-bundle.sh
 ```
 
+코드 변경이 반영되지 않는 경우(캐시 재사용):
+
+```bash
+FORCE_REBUILD=1 ./ota/tools/build-rauc-bundle.sh
+```
+
 산출물:
 - `out/*.raucb`
+- 권장 업로드 대상: `out/des-hu-bundle-raspberrypi4-64.raucb` (최신 timestamp 파일을 가리키는 alias)
 
 ## 4. 외부 서버 준비 (`OTA_SERVER_Itg`)
 
@@ -84,7 +97,7 @@ cd /home/jeongmin/OTA_HeadUnit_Itg
 
 ```bash
 cd /home/jeongmin/OTA_HeadUnit_Itg
-BUNDLE="$(ls -t out/*.raucb | head -n1)"
+BUNDLE="$(readlink -f out/des-hu-bundle-raspberrypi4-64.raucb)"
 VERSION="1.0.1-e2e1"
 SERVER_BASE_URL="http://<SERVER_IP>:8080"
 
@@ -145,6 +158,10 @@ rauc status --output-format=json
 3. `Failed to send update command`
 - 원인: vehicle 매핑/네트워크/디바이스 서비스 문제
 - 조치: Device IP:PORT, `ota-backend` 상태, MQTT 연결 확인
+
+4. 번들이 새로 안 만들어진 것처럼 보임
+- 원인: sstate 캐시 재사용 또는 `out/*.raucb`가 오래된 timestamp 파일을 참조
+- 조치: `FORCE_REBUILD=1 ./ota/tools/build-rauc-bundle.sh` 후 `readlink -f out/des-hu-bundle-raspberrypi4-64.raucb`로 실제 파일 확인
 
 ## 8. 반복 테스트 최소 순서
 

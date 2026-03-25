@@ -86,14 +86,27 @@ cd /home/jeongmin/OTA_HeadUnit_Itg
 ./ota/tools/build-image.sh
 ```
 
+코드 변경 반영이 누락되는 경우:
+
+```bash
+FORCE_REBUILD=1 ./ota/tools/build-image.sh
+```
+
 ### 5-2. OTA 번들 빌드 (E2E 필수)
 
 ```bash
 ./ota/tools/build-rauc-bundle.sh
 ```
 
+코드 변경 반영이 누락되는 경우:
+
+```bash
+FORCE_REBUILD=1 ./ota/tools/build-rauc-bundle.sh
+```
+
 산출물:
 - `out/*.raucb`
+- 권장 업로드 대상: `out/des-hu-bundle-raspberrypi4-64.raucb`
 
 ## 6. 초기 물리 플래싱 (첫 부팅용)
 
